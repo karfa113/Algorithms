@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Design and Analysis of Algorithm Lab — PCC-CS494. Complete C and C++ implementations with concepts, algorithms, and viva questions." />
+<title>Algorithm Lab — DAA (PCC-CS494)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- Animated background blobs -->
+<div class="bg-wrap" aria-hidden="true">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<!-- Top navigation -->
+<header class="topbar glass">
+  <div class="brand">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h16"/><circle cx="19" cy="12" r="2"/></svg>
+    </div>
+    <div class="brand-text">
+      <h1>Algorithm Lab</h1>
+      <span>Design &amp; Analysis of Algorithms · PCC-CS494</span>
+    </div>
+  </div>
+
+  <nav class="topbar-actions">
+    <button id="themeToggle" class="icon-btn glass-btn" title="Toggle theme" aria-label="Toggle theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    </button>
+    <button id="menuToggle" class="icon-btn glass-btn mobile-only" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+  </nav>
+</header>
+
+<!-- Layout -->
+<main class="layout">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="sidebar glass">
+    <div class="sidebar-head">
+      <span class="muted">Index</span>
+      <input id="search" type="search" placeholder="Search algorithm…" />
+    </div>
+    <ul id="algoList" class="algo-list"></ul>
+    <div class="sidebar-foot muted">
+      <small>17 algorithms · C &amp; C++</small>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <section class="content">
+
+    <!-- Hero -->
+    <div id="hero" class="hero glass">
+      <div class="hero-inner">
+        <span class="badge">PCC-CS494 · B.Tech CSE</span>
+        <h2>Master every algorithm in your DAA lab.</h2>
+        <p>A complete reference of <strong>17 algorithms</strong> with concepts, step-by-step pseudocode, working <strong>C</strong> &amp; <strong>C++</strong> implementations, and frequently-asked <strong>viva questions</strong>.</p>
+        <div class="hero-cta">
+          <a href="#algo-1" class="btn primary">Start Learning</a>
+          <a href="#syllabus" class="btn ghost">View Syllabus</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><span>17</span><small>Algorithms</small></div>
+          <div class="stat"><span>2</span><small>Languages</small></div>
+          <div class="stat"><span>100+</span><small>Viva Q&amp;A</small></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Syllabus quick links -->
+    <div id="syllabus" class="syllabus glass">
+      <h3>Lab Syllabus</h3>
+      <ol id="syllabusList" class="syllabus-list"></ol>
+    </div>
+
+    <!-- All algorithm sections rendered here -->
+    <div id="algoContainer"></div>
+
+    <footer class="footer glass">
+      <p>Academy of Technology · Design &amp; Analysis of Algorithm Lab</p>
+      <p class="muted"><small>Built for students · C &amp; C++ implementations</small></p>
+      <p class="credit">Built by <strong>Monojit Karfa</strong></p>
+    </footer>
+  </section>
+</main>
+
+<!-- Toast -->
+<div id="toast" class="toast glass" role="status" aria-live="polite"></div>
+
+<script src="data.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
