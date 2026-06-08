@@ -751,23 +751,36 @@ body {
   }
   .sidebar.open { transform: translateX(0); }
   .mobile-only { display: grid; }
-  .layout { padding: 14px; gap: 14px; }
   .hero { padding: 28px 22px; }
   .hero-stats { gap: 18px; }
   .algo-section { padding: 22px 18px; }
   .syllabus { padding: 20px 18px; }
-  .topbar { margin: 10px; padding: 10px 14px; }
+
+  /* Floating navbar — fixed so it survives body's overflow-x:hidden,
+     which silently kills position:sticky on most mobile browsers. */
+  .topbar {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    margin: 0;
+    padding: 10px 14px;
+  }
+  /* Push content below the floating bar (bar height ~62px + offset). */
+  .layout { padding: 86px 14px 14px; gap: 14px; }
+  .sidebar { top: 0; }
+  .algo-section { scroll-margin-top: 86px; }
 }
 
 @media (max-width: 560px) {
-  .layout { padding: 10px; gap: 12px; }
+  .layout { padding: 78px 10px 10px; gap: 12px; }
   .brand-text span { display: none; }
   .brand h1 { font-size: .95rem; }
   .hero { padding: 22px 16px; }
   .hero h2 { font-size: 1.5rem; }
   .hero p { font-size: .9rem; }
   .stat span { font-size: 1.4rem; }
-  .algo-section { padding: 18px 14px; }
+  .algo-section { padding: 18px 14px; scroll-margin-top: 78px; }
   .algo-num { width: 44px; height: 44px; font-size: 1rem; }
   .algo-title h2 { font-size: 1.05rem; }
   .code-pane pre { font-size: .74rem; padding: 14px; line-height: 1.55; }
