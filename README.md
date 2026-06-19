@@ -116,7 +116,6 @@ Built as a static site — no framework, no build step. Just open `index.html` i
 
 </div>
 
-Zero npm dependencies. Zero build tools.
 
 <br/>
 
