@@ -71,6 +71,18 @@ body {
   scroll-behavior: smooth;
 }
 
+/* Display font — Space Grotesk for brand wordmark + headings.
+   Inter remains the body face for dense reading. */
+h1, h2, h3,
+.brand h1,
+.hero h2,
+.algo-title h2,
+.subsection h3,
+.syllabus h3 {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.015em;
+}
+
 /* ---------- Static background ---------- */
 .bg-wrap {
   position: fixed;
@@ -297,12 +309,12 @@ body {
 .hero h2 {
   font-size: clamp(1.7rem, 4vw, 2.6rem);
   line-height: 1.15;
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: -0.02em;
   margin-bottom: 14px;
   color: var(--text);
 }
-.hero h2 strong { color: var(--orange); font-weight: 800; }
+.hero h2 strong { color: var(--orange); font-weight: 700; }
 .hero p {
   font-size: 1.02rem;
   color: var(--text-muted);
