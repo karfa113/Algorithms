@@ -1,6 +1,6 @@
 /* ============================================================
    Algorithm Lab Data
-   17 algorithms — concept, algorithm, complexity, C, C++, viva
+   20 algorithms — concept, algorithm, complexity, C, C++, viva
    ============================================================ */
 
 window.ALGORITHMS = [
@@ -349,33 +349,30 @@ int main() {
   complexity: { best: "O(n)", avg: "O(n)", worst: "O(n)", space: "O(log n)" },
   c: `#include <stdio.h>
 
-typedef struct { int max, min; } Pair;
-
-Pair maxMin(int arr[], int low, int high) {
-    Pair result, left, right;
+void maxMin(int arr[], int low, int high, int *max, int *min) {
+    int max1, min1, max2, min2, mid;
     if (low == high) {
-        result.max = result.min = arr[low];
+        *max = *min = arr[low];
     } else if (high == low + 1) {
-        if (arr[low] < arr[high]) { result.min = arr[low];  result.max = arr[high]; }
-        else                       { result.min = arr[high]; result.max = arr[low];  }
+        if (arr[low] < arr[high]) { *min = arr[low];  *max = arr[high]; }
+        else                       { *min = arr[high]; *max = arr[low];  }
     } else {
-        int mid = (low + high) / 2;
-        left  = maxMin(arr, low, mid);
-        right = maxMin(arr, mid + 1, high);
-        result.max = (left.max > right.max) ? left.max : right.max;
-        result.min = (left.min < right.min) ? left.min : right.min;
+        mid = (low + high) / 2;
+        maxMin(arr, low, mid, &max1, &min1);
+        maxMin(arr, mid + 1, high, &max2, &min2);
+        *max = (max1 > max2) ? max1 : max2;
+        *min = (min1 < min2) ? min1 : min2;
     }
-    return result;
 }
 
 int main(void) {
-    int n;
+    int n, max, min;
     printf("Size: "); scanf("%d", &n);
     int arr[n];
     printf("Elements: ");
     for (int i = 0; i < n; i++) scanf("%d", &arr[i]);
-    Pair p = maxMin(arr, 0, n - 1);
-    printf("Max = %d, Min = %d\\n", p.max, p.min);
+    maxMin(arr, 0, n - 1, &max, &min);
+    printf("Max = %d, Min = %d\\n", max, min);
     return 0;
 }`,
   cpp: `#include <iostream>
@@ -1266,7 +1263,7 @@ void dijkstra(int src) {
         for (int v = 0; v < n; v++)
             if (!visited[v] && graph[u][v] && dist[u] != INT_MAX
                 && dist[u] + graph[u][v] < dist[v])
-                dist[v] = dist[u] + graph[u][v];
+                    dist[v] = dist[u] + graph[u][v];
     }
 
     printf("Vertex\\tDistance from %d\\n", src);
@@ -1303,7 +1300,7 @@ void dijkstra(vector<vector<int>>& g, int src) {
         for (int v = 0; v < n; v++)
             if (!visited[v] && g[u][v] && dist[u] != INT_MAX
                 && dist[u] + g[u][v] < dist[v])
-                dist[v] = dist[u] + g[u][v];
+                    dist[v] = dist[u] + g[u][v];
     }
 
     cout << "Vertex\\tDistance\\n";
@@ -1648,7 +1645,6 @@ int main() {
   ],
   complexity: { best: "O(N!)", avg: "O(N!)", worst: "O(N!)", space: "O(N²)" },
   c: `#include <stdio.h>
-#include <stdbool.h>
 #define MAX 20
 
 int board[MAX][MAX], N;
@@ -1660,23 +1656,23 @@ void printBoard(void) {
     }
 }
 
-bool isSafe(int row, int col) {
-    for (int i = 0; i < col; i++) if (board[row][i]) return false;
-    for (int i = row, j = col; i >= 0 && j >= 0; i--, j--) if (board[i][j]) return false;
-    for (int i = row, j = col; i < N && j >= 0; i++, j--) if (board[i][j]) return false;
-    return true;
+int isSafe(int row, int col) {
+    for (int i = 0; i < col; i++) if (board[row][i]) return 0;
+    for (int i = row, j = col; i >= 0 && j >= 0; i--, j--) if (board[i][j]) return 0;
+    for (int i = row, j = col; i < N && j >= 0; i++, j--) if (board[i][j]) return 0;
+    return 1;
 }
 
-bool solve(int col) {
-    if (col >= N) return true;
+int solve(int col) {
+    if (col >= N) return 1;
     for (int i = 0; i < N; i++) {
         if (isSafe(i, col)) {
             board[i][col] = 1;
-            if (solve(col + 1)) return true;
+            if (solve(col + 1)) return 1;
             board[i][col] = 0;     /* backtrack */
         }
     }
-    return false;
+    return 0;
 }
 
 int main(void) {
@@ -1760,27 +1756,26 @@ int main() {
   ],
   complexity: { best: "O(m^N)", avg: "O(m^N)", worst: "O(m^N)", space: "O(N)" },
   c: `#include <stdio.h>
-#include <stdbool.h>
 #define V 20
 
 int graph[V][V], color[V], n, m;
 
-bool isSafe(int v, int c) {
+int isSafe(int v, int c) {
     for (int i = 0; i < n; i++)
-        if (graph[v][i] && color[i] == c) return false;
-    return true;
+        if (graph[v][i] && color[i] == c) return 0;
+    return 1;
 }
 
-bool graphColoring(int v) {
-    if (v == n) return true;
+int graphColoring(int v) {
+    if (v == n) return 1;
     for (int c = 1; c <= m; c++) {
         if (isSafe(v, c)) {
             color[v] = c;
-            if (graphColoring(v + 1)) return true;
+            if (graphColoring(v + 1)) return 1;
             color[v] = 0;     /* backtrack */
         }
     }
-    return false;
+    return 0;
 }
 
 int main(void) {
@@ -1850,6 +1845,516 @@ int main() {
     { q: "Time complexity?", a: "Worst-case O(m^N) — each vertex can take m colors and there are N vertices." },
     { q: "What is the role of backtracking here?", a: "It systematically tries every color for each vertex and undoes assignments that lead to dead-ends, pruning impossible branches." },
     { q: "Real-world applications?", a: "Map coloring, register allocation in compilers, time-table scheduling, frequency assignment in cellular networks, and Sudoku." }
+  ]
+},
+
+/* ============================================================
+   18. HAMILTONIAN CYCLE
+============================================================ */
+{
+  id: 18,
+  name: "Hamiltonian Cycle",
+  short: "Hamiltonian Cycle",
+  tags: ["Backtracking", "Graph"],
+  concept: `A <strong>Hamiltonian Cycle</strong> in an undirected graph is a cycle that visits every vertex exactly once and returns to the starting vertex. Deciding whether such a cycle exists is an <strong>NP-complete</strong> problem. The standard solution uses <strong>backtracking</strong>: starting from vertex <code>0</code>, we try to extend the current path one vertex at a time. At every step we check that the candidate vertex is adjacent to the previous one and has not been used. If we reach a dead end we backtrack. After all <code>n</code> vertices are placed, we verify that an edge exists from the last vertex back to the start.`,
+  process: [
+    "<strong>Step 1:</strong> Start.",
+    "<strong>Step 2:</strong> Read the number of vertices <code>n</code> and edges <code>e</code>. Build the adjacency matrix <code>graph[n][n]</code>.",
+    "<strong>Step 3:</strong> Initialize <code>path[0..n-1] = -1</code>. Place the starting vertex: <code>path[0] = 0</code>.",
+    "<strong>Step 4:</strong> Call <code>hamCycle(pos = 1)</code> to fill the remaining positions of the path.",
+    "<strong>Step 5:</strong> In <code>hamCycle(pos)</code>:",
+    "&nbsp;&nbsp;&nbsp;&nbsp;<strong>(a)</strong> [Base case] If <code>pos == n</code>, every vertex has been placed. Return <code>true</code> only if <code>graph[path[pos-1]][path[0]] == 1</code> (an edge closes the cycle).",
+    "&nbsp;&nbsp;&nbsp;&nbsp;<strong>(b)</strong> For each candidate vertex <code>v</code> from <code>1</code> to <code>n - 1</code>:",
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>(i)</strong> If <code>isSafe(v, pos)</code> returns <code>true</code>:",
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;– assign <code>path[pos] = v</code>.",
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;– recursively call <code>hamCycle(pos + 1)</code>; if it returns <code>true</code>, propagate success.",
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;– otherwise <strong>backtrack</strong>: reset <code>path[pos] = -1</code> and try the next vertex.",
+    "&nbsp;&nbsp;&nbsp;&nbsp;<strong>(c)</strong> If no vertex works at position <code>pos</code>, return <code>false</code>.",
+    "<strong>Step 6:</strong> <code>isSafe(v, pos)</code> procedure: confirm (a) <code>graph[path[pos-1]][v] == 1</code> (edge exists from previous vertex) and (b) <code>v</code> is not already present in <code>path[0..pos-1]</code>.",
+    "<strong>Step 7:</strong> If <code>hamCycle(1)</code> returns <code>true</code>, print the cycle (<code>path[0] → path[1] → … → path[n-1] → path[0]</code>). Otherwise print <em>“No Hamiltonian Cycle exists.”</em>",
+    "<strong>Step 8:</strong> Stop."
+  ],
+  complexity: { best: "O(N!)", avg: "O(N!)", worst: "O(N!)", space: "O(N)" },
+  c: `#include <stdio.h>
+#define V 20
+
+int graph[V][V], path[V], n;
+
+int isSafe(int v, int pos) {
+    if (!graph[path[pos - 1]][v]) return 0;
+    for (int i = 0; i < pos; i++) if (path[i] == v) return 0;
+    return 1;
+}
+
+int hamCycle(int pos) {
+    if (pos == n)
+        return graph[path[pos - 1]][path[0]] == 1;
+    for (int v = 1; v < n; v++) {
+        if (isSafe(v, pos)) {
+            path[pos] = v;
+            if (hamCycle(pos + 1)) return 1;
+            path[pos] = -1;    /* backtrack */
+        }
+    }
+    return 0;
+}
+
+int main(void) {
+    int e, u, v;
+    printf("Vertices: "); scanf("%d", &n);
+    printf("Edges: ");    scanf("%d", &e);
+    printf("Edges (u v):\\n");
+    for (int i = 0; i < e; i++) {
+        scanf("%d %d", &u, &v);
+        graph[u][v] = graph[v][u] = 1;
+    }
+
+    for (int i = 0; i < n; i++) path[i] = -1;
+    path[0] = 0;
+
+    if (hamCycle(1)) {
+        printf("Hamiltonian Cycle: ");
+        for (int i = 0; i < n; i++) printf("%d -> ", path[i]);
+        printf("%d\\n", path[0]);
+    } else {
+        printf("No Hamiltonian Cycle exists.\\n");
+    }
+    return 0;
+}`,
+  cpp: `#include <iostream>
+#include <vector>
+using namespace std;
+
+int n;
+vector<vector<int>> graph;
+vector<int> path_;
+
+bool isSafe(int v, int pos) {
+    if (!graph[path_[pos - 1]][v]) return false;
+    for (int i = 0; i < pos; i++) if (path_[i] == v) return false;
+    return true;
+}
+
+bool hamCycle(int pos) {
+    if (pos == n)
+        return graph[path_[pos - 1]][path_[0]] == 1;
+    for (int v = 1; v < n; v++) {
+        if (isSafe(v, pos)) {
+            path_[pos] = v;
+            if (hamCycle(pos + 1)) return true;
+            path_[pos] = -1;
+        }
+    }
+    return false;
+}
+
+int main() {
+    int e, u, v;
+    cout << "Vertices: "; cin >> n;
+    cout << "Edges: ";    cin >> e;
+    graph.assign(n, vector<int>(n, 0));
+    path_.assign(n, -1);
+    cout << "Edges (u v):\\n";
+    while (e--) { cin >> u >> v; graph[u][v] = graph[v][u] = 1; }
+    path_[0] = 0;
+
+    if (hamCycle(1)) {
+        cout << "Hamiltonian Cycle: ";
+        for (int i = 0; i < n; i++) cout << path_[i] << " -> ";
+        cout << path_[0] << endl;
+    } else {
+        cout << "No Hamiltonian Cycle exists." << endl;
+    }
+    return 0;
+}`,
+  viva: [
+    { q: "What is a Hamiltonian Cycle?", a: "A cycle in a graph that visits every vertex exactly once and returns to the starting vertex." },
+    { q: "Difference between Hamiltonian and Eulerian cycle?", a: "Hamiltonian visits every <i>vertex</i> exactly once; Eulerian uses every <i>edge</i> exactly once. Eulerian is solvable in polynomial time, Hamiltonian is NP-complete." },
+    { q: "Why is Hamiltonian Cycle NP-complete?", a: "There is no known polynomial-time algorithm; it was one of Karp's 21 NP-complete problems and is closely related to TSP." },
+    { q: "What is the time complexity of the backtracking solution?", a: "Worst-case O(N!) — at each of N positions we may try up to N vertices, pruned by the safety check." },
+    { q: "Why fix <code>path[0] = 0</code>?", a: "Because any Hamiltonian cycle can be rotated to start at vertex 0. Fixing it eliminates N equivalent rotations and prunes redundant work." },
+    { q: "What is the role of <code>isSafe</code>?", a: "It enforces two constraints: the candidate vertex must be adjacent to the previous one in the path, and it must not already appear in the partial path." },
+    { q: "Applications?", a: "Travelling salesman, DNA fragment assembly, circuit design, and tour-planning problems." }
+  ]
+},
+
+/* ============================================================
+   19. FORD-FULKERSON ALGORITHM
+============================================================ */
+{
+  id: 19,
+  name: "Ford-Fulkerson (Max Flow)",
+  short: "Ford-Fulkerson",
+  tags: ["Graph", "Max Flow"],
+  concept: `The Ford-Fulkerson method computes the <strong>maximum flow</strong> from a source <code>s</code> to a sink <code>t</code> in a flow network — a directed graph whose edges carry non-negative capacities. The idea is to repeatedly find an <strong>augmenting path</strong> from <code>s</code> to <code>t</code> in the <em>residual graph</em> and push flow equal to the path's bottleneck capacity along it. The residual graph stores remaining capacity on forward edges and used flow on reverse edges (allowing flow cancellation). When no augmenting path remains, the algorithm terminates. Using BFS to find the path gives the Edmonds-Karp variant with complexity <code>O(V·E²)</code>.`,
+  process: [
+    "<strong>Step 1:</strong> Start.",
+    "<strong>Step 2:</strong> Read the number of vertices <code>V</code> and the capacity matrix <code>cap[V][V]</code>. Read the source <code>s</code> and the sink <code>t</code>.",
+    "<strong>Step 3:</strong> Create a residual graph <code>rGraph[V][V]</code> and initialize <code>rGraph[u][v] = cap[u][v]</code> for every pair.",
+    "<strong>Step 4:</strong> Initialize <code>maxFlow = 0</code>.",
+    "<strong>Step 5:</strong> Repeat while a path from <code>s</code> to <code>t</code> exists in the residual graph:",
+    "&nbsp;&nbsp;&nbsp;&nbsp;<strong>(a)</strong> Use BFS from <code>s</code>; record <code>parent[v]</code> for each visited vertex. If <code>t</code> is unreachable, exit the loop.",
+    "&nbsp;&nbsp;&nbsp;&nbsp;<strong>(b)</strong> Compute the bottleneck capacity along the path: <code>pathFlow = min(rGraph[u][v])</code> for every edge <code>(u, v)</code> on the path traced from <code>t</code> back to <code>s</code>.",
+    "&nbsp;&nbsp;&nbsp;&nbsp;<strong>(c)</strong> Update the residual graph: for every edge <code>(u, v)</code> on the path, set <code>rGraph[u][v] -= pathFlow</code> (forward) and <code>rGraph[v][u] += pathFlow</code> (reverse).",
+    "&nbsp;&nbsp;&nbsp;&nbsp;<strong>(d)</strong> Add <code>pathFlow</code> to <code>maxFlow</code>.",
+    "<strong>Step 6:</strong> When no augmenting path can be found, the maximum flow has been reached.",
+    "<strong>Step 7:</strong> Print <code>maxFlow</code> as the answer.",
+    "<strong>Step 8:</strong> Stop."
+  ],
+  complexity: { best: "O(VE²)", avg: "O(VE²)", worst: "O(E·max_flow)", space: "O(V²)" },
+  c: `#include <stdio.h>
+#include <string.h>
+#include <limits.h>
+#define V 100
+
+int rGraph[V][V], n;
+
+int bfs(int s, int t, int parent[]) {
+    int visited[V] = {0};
+    int queue_[V], front = 0, rear = 0;
+    queue_[rear++] = s;
+    visited[s] = 1;
+    parent[s] = -1;
+    while (front < rear) {
+        int u = queue_[front++];
+        for (int v = 0; v < n; v++) {
+            if (!visited[v] && rGraph[u][v] > 0) {
+                parent[v] = u;
+                visited[v] = 1;
+                if (v == t) return 1;
+                queue_[rear++] = v;
+            }
+        }
+    }
+    return 0;
+}
+
+int fordFulkerson(int s, int t) {
+    int parent[V], maxFlow = 0;
+    while (bfs(s, t, parent)) {
+        int pathFlow = INT_MAX;
+        for (int v = t; v != s; v = parent[v]) {
+            int u = parent[v];
+            if (rGraph[u][v] < pathFlow) pathFlow = rGraph[u][v];
+        }
+        for (int v = t; v != s; v = parent[v]) {
+            int u = parent[v];
+            rGraph[u][v] -= pathFlow;
+            rGraph[v][u] += pathFlow;
+        }
+        maxFlow += pathFlow;
+    }
+    return maxFlow;
+}
+
+int main(void) {
+    int s, t;
+    printf("Vertices: "); scanf("%d", &n);
+    printf("Enter capacity matrix (%d x %d):\\n", n, n);
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++) scanf("%d", &rGraph[i][j]);
+    printf("Source: "); scanf("%d", &s);
+    printf("Sink: ");   scanf("%d", &t);
+    printf("Maximum flow = %d\\n", fordFulkerson(s, t));
+    return 0;
+}`,
+  cpp: `#include <iostream>
+#include <vector>
+#include <queue>
+#include <climits>
+#include <cstring>
+using namespace std;
+
+int n;
+vector<vector<int>> rGraph;
+
+bool bfs(int s, int t, vector<int>& parent) {
+    vector<bool> visited(n, false);
+    queue<int> q;
+    q.push(s);
+    visited[s] = true;
+    parent[s] = -1;
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        for (int v = 0; v < n; v++) {
+            if (!visited[v] && rGraph[u][v] > 0) {
+                parent[v] = u;
+                visited[v] = true;
+                if (v == t) return true;
+                q.push(v);
+            }
+        }
+    }
+    return false;
+}
+
+int fordFulkerson(int s, int t) {
+    vector<int> parent(n);
+    int maxFlow = 0;
+    while (bfs(s, t, parent)) {
+        int pathFlow = INT_MAX;
+        for (int v = t; v != s; v = parent[v]) {
+            int u = parent[v];
+            pathFlow = min(pathFlow, rGraph[u][v]);
+        }
+        for (int v = t; v != s; v = parent[v]) {
+            int u = parent[v];
+            rGraph[u][v] -= pathFlow;
+            rGraph[v][u] += pathFlow;
+        }
+        maxFlow += pathFlow;
+    }
+    return maxFlow;
+}
+
+int main() {
+    int s, t;
+    cout << "Vertices: "; cin >> n;
+    rGraph.assign(n, vector<int>(n, 0));
+    cout << "Capacity matrix:\\n";
+    for (auto& r : rGraph) for (auto& x : r) cin >> x;
+    cout << "Source: "; cin >> s;
+    cout << "Sink: ";   cin >> t;
+    cout << "Maximum flow = " << fordFulkerson(s, t) << endl;
+    return 0;
+}`,
+  viva: [
+    { q: "What is a flow network?", a: "A directed graph with non-negative edge capacities, a source <code>s</code>, and a sink <code>t</code>. Flow on every edge must be ≤ capacity, and total flow in equals total flow out at every internal vertex." },
+    { q: "What is the residual graph?", a: "A graph that records remaining capacity on forward edges (<code>cap - flow</code>) and used flow on reverse edges. Reverse edges allow the algorithm to <i>cancel</i> previously sent flow." },
+    { q: "What is an augmenting path?", a: "A path from source to sink in the residual graph in which every edge has positive residual capacity. Flow can be pushed along it equal to the path's bottleneck." },
+    { q: "Why use BFS instead of DFS?", a: "BFS finds the shortest augmenting path. This is the Edmonds-Karp variant and guarantees O(V·E²) time. Plain DFS may not terminate for irrational capacities and can be much slower in the worst case." },
+    { q: "State the Max-Flow Min-Cut theorem.", a: "The maximum flow from <code>s</code> to <code>t</code> equals the capacity of the minimum <code>s-t</code> cut (smallest total capacity of edges whose removal disconnects <code>s</code> from <code>t</code>)." },
+    { q: "Time complexity?", a: "O(E · max_flow) for the original Ford-Fulkerson with DFS. O(V · E²) for Edmonds-Karp (BFS). O(V²·E) using Dinic's algorithm." },
+    { q: "Applications of max flow?", a: "Bipartite matching, image segmentation, network routing, project selection, and baseball elimination problems." }
+  ]
+},
+
+/* ============================================================
+   20. TRAVELLING SALESMAN (BRANCH & BOUND)
+============================================================ */
+{
+  id: 20,
+  name: "Travelling Salesman (Branch & Bound)",
+  short: "TSP (B&B)",
+  tags: ["Branch & Bound", "Graph", "NP-Hard"],
+  concept: `In the <strong>Travelling Salesman Problem (TSP)</strong> a salesman must visit every city exactly once and return to the starting city while minimizing the total tour cost. TSP is <strong>NP-hard</strong>. The <strong>Branch & Bound</strong> approach explores the search space as a tree: each node represents a partial tour. At every node we compute a <strong>lower bound</strong> on the cost of any completion of that partial tour. If the bound already exceeds the best known tour, we prune the subtree. Otherwise we branch into the remaining cities. The lower bound is typically derived from summing the two smallest outgoing edges of every unvisited vertex.`,
+  process: [
+    "<strong>Step 1:</strong> Start.",
+    "<strong>Step 2:</strong> Read the number of cities <code>n</code> and the cost matrix <code>cost[n][n]</code> (use <code>∞</code> on the diagonal).",
+    "<strong>Step 3:</strong> Initialize <code>finalRes = ∞</code> (best tour cost found so far), <code>finalPath[]</code> (best tour), <code>visited[v] = false</code>, and <code>currPath[0] = 0</code> with <code>visited[0] = true</code>.",
+    "<strong>Step 4:</strong> Compute the initial lower bound <code>currBound</code> as the sum of the two smallest edges incident on every vertex, divided by 2.",
+    "<strong>Step 5:</strong> Call <code>TSPRec(currBound, currWeight = 0, level = 1, currPath)</code>.",
+    "<strong>Step 6:</strong> In <code>TSPRec(currBound, currWeight, level, currPath)</code>:",
+    "&nbsp;&nbsp;&nbsp;&nbsp;<strong>(a)</strong> [Base case] If <code>level == n</code>, a complete tour has been formed. If the closing edge <code>cost[currPath[level-1]][currPath[0]]</code> exists, compute <code>currRes = currWeight + cost[currPath[level-1]][currPath[0]]</code>. If <code>currRes &lt; finalRes</code>, update <code>finalPath</code> and <code>finalRes</code>. Return.",
+    "&nbsp;&nbsp;&nbsp;&nbsp;<strong>(b)</strong> For each city <code>i</code> from <code>0</code> to <code>n - 1</code>:",
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>(i)</strong> Skip if <code>i</code> is already visited or <code>cost[currPath[level-1]][i]</code> is <code>∞</code>.",
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>(ii)</strong> Save <code>temp = currBound</code>. Add <code>cost[currPath[level-1]][i]</code> to <code>currWeight</code>.",
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>(iii)</strong> Update <code>currBound</code> by subtracting the appropriate first/second smallest edge contributions of <code>currPath[level-1]</code> and <code>i</code>.",
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>(iv)</strong> If <code>currBound + currWeight &lt; finalRes</code> (<strong>promising</strong>): set <code>currPath[level] = i</code>, mark <code>visited[i] = true</code>, and recursively call <code>TSPRec(currBound, currWeight, level + 1, currPath)</code>.",
+    "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<strong>(v)</strong> [Backtrack] Restore <code>currWeight -= cost[currPath[level-1]][i]</code>, <code>currBound = temp</code>, and unmark <code>visited[i]</code>.",
+    "<strong>Step 7:</strong> After the recursion ends, <code>finalRes</code> contains the optimal tour cost and <code>finalPath</code> the optimal order of cities.",
+    "<strong>Step 8:</strong> Print <code>finalPath</code> and <code>finalRes</code>.",
+    "<strong>Step 9:</strong> Stop."
+  ],
+  complexity: { best: "O(N²·2^N)", avg: "O(N!) pruned", worst: "O(N!)", space: "O(N²)" },
+  c: `#include <stdio.h>
+#include <limits.h>
+#define N 20
+
+int n;
+int cost[N][N];
+int finalPath[N + 1];
+int visited[N];
+int finalRes = INT_MAX;
+
+void copyToFinal(int currPath[]) {
+    for (int i = 0; i < n; i++) finalPath[i] = currPath[i];
+    finalPath[n] = currPath[0];
+}
+
+int firstMin(int i) {
+    int min = INT_MAX;
+    for (int k = 0; k < n; k++)
+        if (cost[i][k] < min && i != k) min = cost[i][k];
+    return min;
+}
+
+int secondMin(int i) {
+    int first = INT_MAX, second = INT_MAX;
+    for (int j = 0; j < n; j++) {
+        if (i == j) continue;
+        if (cost[i][j] <= first) { second = first; first = cost[i][j]; }
+        else if (cost[i][j] <= second && cost[i][j] != first) second = cost[i][j];
+    }
+    return second;
+}
+
+void TSPRec(int currBound, int currWeight, int level, int currPath[]) {
+    if (level == n) {
+        if (cost[currPath[level - 1]][currPath[0]] != 0) {
+            int currRes = currWeight + cost[currPath[level - 1]][currPath[0]];
+            if (currRes < finalRes) {
+                copyToFinal(currPath);
+                finalRes = currRes;
+            }
+        }
+        return;
+    }
+    for (int i = 0; i < n; i++) {
+        if (cost[currPath[level - 1]][i] != 0 && !visited[i]) {
+            int temp = currBound;
+            currWeight += cost[currPath[level - 1]][i];
+
+            if (level == 1)
+                currBound -= ((firstMin(currPath[level - 1]) + firstMin(i)) / 2);
+            else
+                currBound -= ((secondMin(currPath[level - 1]) + firstMin(i)) / 2);
+
+            if (currBound + currWeight < finalRes) {
+                currPath[level] = i;
+                visited[i] = 1;
+                TSPRec(currBound, currWeight, level + 1, currPath);
+            }
+            /* backtrack */
+            currWeight -= cost[currPath[level - 1]][i];
+            currBound = temp;
+            for (int j = 0; j < n; j++) visited[j] = 0;
+            for (int j = 0; j <= level - 1; j++) visited[currPath[j]] = 1;
+        }
+    }
+}
+
+void TSP(void) {
+    int currPath[N + 1];
+    int currBound = 0;
+    for (int i = 0; i <= n; i++) currPath[i] = -1;
+    for (int i = 0; i < n; i++) visited[i] = 0;
+
+    for (int i = 0; i < n; i++)
+        currBound += (firstMin(i) + secondMin(i));
+    currBound = (currBound & 1) ? currBound / 2 + 1 : currBound / 2;
+
+    visited[0] = 1;
+    currPath[0] = 0;
+    TSPRec(currBound, 0, 1, currPath);
+}
+
+int main(void) {
+    printf("Number of cities: "); scanf("%d", &n);
+    printf("Enter cost matrix (%d x %d), 0 if no edge:\\n", n, n);
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++) scanf("%d", &cost[i][j]);
+
+    TSP();
+    printf("Minimum cost = %d\\n", finalRes);
+    printf("Path: ");
+    for (int i = 0; i <= n; i++) printf("%d ", finalPath[i]);
+    printf("\\n");
+    return 0;
+}`,
+  cpp: `#include <iostream>
+#include <vector>
+#include <climits>
+using namespace std;
+
+int n;
+vector<vector<int>> cost_;
+vector<int> finalPath;
+vector<bool> visited;
+int finalRes = INT_MAX;
+
+void copyToFinal(vector<int>& currPath) {
+    for (int i = 0; i < n; i++) finalPath[i] = currPath[i];
+    finalPath[n] = currPath[0];
+}
+
+int firstMin(int i) {
+    int mn = INT_MAX;
+    for (int k = 0; k < n; k++)
+        if (cost_[i][k] < mn && i != k) mn = cost_[i][k];
+    return mn;
+}
+
+int secondMin(int i) {
+    int first = INT_MAX, second = INT_MAX;
+    for (int j = 0; j < n; j++) {
+        if (i == j) continue;
+        if (cost_[i][j] <= first) { second = first; first = cost_[i][j]; }
+        else if (cost_[i][j] <= second && cost_[i][j] != first) second = cost_[i][j];
+    }
+    return second;
+}
+
+void TSPRec(int currBound, int currWeight, int level, vector<int>& currPath) {
+    if (level == n) {
+        if (cost_[currPath[level - 1]][currPath[0]] != 0) {
+            int currRes = currWeight + cost_[currPath[level - 1]][currPath[0]];
+            if (currRes < finalRes) {
+                copyToFinal(currPath);
+                finalRes = currRes;
+            }
+        }
+        return;
+    }
+    for (int i = 0; i < n; i++) {
+        if (cost_[currPath[level - 1]][i] != 0 && !visited[i]) {
+            int temp = currBound;
+            currWeight += cost_[currPath[level - 1]][i];
+
+            if (level == 1)
+                currBound -= ((firstMin(currPath[level - 1]) + firstMin(i)) / 2);
+            else
+                currBound -= ((secondMin(currPath[level - 1]) + firstMin(i)) / 2);
+
+            if (currBound + currWeight < finalRes) {
+                currPath[level] = i;
+                visited[i] = true;
+                TSPRec(currBound, currWeight, level + 1, currPath);
+            }
+            currWeight -= cost_[currPath[level - 1]][i];
+            currBound = temp;
+            fill(visited.begin(), visited.end(), false);
+            for (int j = 0; j <= level - 1; j++) visited[currPath[j]] = true;
+        }
+    }
+}
+
+void TSP() {
+    vector<int> currPath(n + 1, -1);
+    visited.assign(n, false);
+    finalPath.assign(n + 1, -1);
+
+    int currBound = 0;
+    for (int i = 0; i < n; i++) currBound += (firstMin(i) + secondMin(i));
+    currBound = (currBound & 1) ? currBound / 2 + 1 : currBound / 2;
+
+    visited[0] = true;
+    currPath[0] = 0;
+    TSPRec(currBound, 0, 1, currPath);
+}
+
+int main() {
+    cout << "Number of cities: "; cin >> n;
+    cost_.assign(n, vector<int>(n, 0));
+    cout << "Cost matrix (0 if no edge):\\n";
+    for (auto& r : cost_) for (auto& x : r) cin >> x;
+
+    TSP();
+    cout << "Minimum cost = " << finalRes << endl;
+    cout << "Path: ";
+    for (int x : finalPath) cout << x << " ";
+    cout << endl;
+    return 0;
+}`,
+  viva: [
+    { q: "What is the Travelling Salesman Problem?", a: "Given <code>n</code> cities and pairwise distances, find the minimum-cost tour that visits every city exactly once and returns to the starting city." },
+    { q: "Why is TSP NP-hard?", a: "There is no known polynomial-time algorithm. Naively there are (n-1)!/2 tours. The decision version is NP-complete." },
+    { q: "What does Branch & Bound do?", a: "It explores the search tree of partial solutions but prunes any branch whose lower bound on cost already exceeds the best known full tour. This avoids exploring obviously sub-optimal subtrees." },
+    { q: "How is the lower bound computed?", a: "Sum the two smallest outgoing edges of every vertex and divide by 2. Any valid tour enters and leaves each vertex once, so this sum is a valid lower bound on tour cost." },
+    { q: "Difference between Branch & Bound and Backtracking?", a: "Both prune the search tree, but B&B uses a numerical bound (cost) to prune, while plain backtracking prunes only on infeasibility. B&B is for optimization problems; backtracking suits feasibility problems." },
+    { q: "Difference between B&B TSP and DP TSP (Held-Karp)?", a: "Held-Karp DP runs in O(N²·2^N) time guaranteed. Branch & Bound has exponential worst case but can be much faster in practice via aggressive pruning, especially on Euclidean instances." },
+    { q: "What is the time complexity?", a: "Worst case O(N!). With good bounds and pruning, the practical performance is far better. The space complexity is O(N²) for the cost matrix." },
+    { q: "Real-world applications?", a: "Logistics and route planning, PCB drilling, DNA sequencing, vehicle routing, and warehouse picking." }
   ]
 }
 ];
