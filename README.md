@@ -3,7 +3,7 @@
 ============================================================ -->
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0%3A0a0a0a%2C100%3Aff7a18&height=220&section=header&text=Algorithm%20Lab&fontSize=70&fontColor=ffffff&fontAlignY=38&desc=Design%20%26%20Analysis%20of%20Algorithms%20%C2%B7%20PCC-CS494&descSize=18&descAlignY=60&animation=fadeIn" alt="Algorithm Lab banner" />
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0%3A0a0a0a%2C100%3Aff7a18&height=220&section=header&text=Algorithm%20Lab&fontSize=70&fontColor=ffffff&fontAlignY=38&desc=Design%20and%20Analysis%20of%20Algorithms%20%C2%B7%20PCC-CS494&descSize=18&descAlignY=60&animation=fadeIn" alt="Algorithm Lab banner" />
 
 <!-- TYPING SVG TAGLINE -->
 <a href="#">
@@ -70,6 +70,8 @@ Built as a static site — no framework, no build step. Just open `index.html` i
   <img src="https://capsule-render.vercel.app/api?type=waving&color=0%3A0a0a0a%2C100%3Aff7a18&height=80&section=header&text=Algorithms%20Covered&fontSize=30&fontColor=ffffff&fontAlignY=55&animation=fadeIn" alt="Algorithms Covered" />
 </div>
 
+<div align="center">
+
 | #   | Algorithm                              | Category                  |
 | --- | -------------------------------------- | ------------------------- |
 | 01  | Binary Search (Recursive)              | Divide & Conquer          |
@@ -93,12 +95,16 @@ Built as a static site — no framework, no build step. Just open `index.html` i
 | 19  | Ford-Fulkerson (Max Flow)              | Graph, Max Flow           |
 | 20  | Travelling Salesman (Branch & Bound)   | Branch & Bound, NP-Hard   |
 
+</div>
+
 <br/>
 
 <!-- SECTION HEADER: TECH STACK -->
 <div align="center">
   <img src="https://capsule-render.vercel.app/api?type=waving&color=0%3A0a0a0a%2C100%3Aff7a18&height=80&section=header&text=Tech%20Stack&fontSize=32&fontColor=ffffff&fontAlignY=55&animation=fadeIn" alt="Tech Stack" />
 </div>
+
+<div align="center">
 
 | Layer            | Choice                                                              |
 | ---------------- | ------------------------------------------------------------------- |
@@ -107,6 +113,8 @@ Built as a static site — no framework, no build step. Just open `index.html` i
 | Behavior         | Vanilla JavaScript (ES6+) — no framework, no bundler                |
 | Fonts            | Google Fonts — Space Grotesk (display) + Inter (UI) + JetBrains Mono (code) |
 | Syntax highlight | Custom single-pass tokenizer (built in `script.js`)                 |
+
+</div>
 
 Zero npm dependencies. Zero build tools.
 
@@ -222,12 +230,16 @@ Dark mode is the default. Light mode lives under `[data-theme="light"]`. To forc
   <img src="https://capsule-render.vercel.app/api?type=waving&color=0%3A0a0a0a%2C100%3Aff7a18&height=80&section=header&text=Responsive%20Breakpoints&fontSize=28&fontColor=ffffff&fontAlignY=55&animation=fadeIn" alt="Responsive Breakpoints" />
 </div>
 
+<div align="center">
+
 | Width    | Behavior                                                                     |
 | -------- | ---------------------------------------------------------------------------- |
 | ≥ 980 px | Fixed sidebar + content grid                                                 |
 | ≤ 980 px | Sidebar collapses to slide-in drawer with backdrop; topbar shows menu button |
 | ≤ 560 px | Brand tagline hidden; tighter card padding; smaller code font                |
 | ≤ 400 px | Syllabus drops to single column; hero CTA buttons stack vertically           |
+
+</div>
 
 <br/>
 
