@@ -17,7 +17,7 @@
       return "ws://127.0.0.1:8765/ws/run";
     }
     // EDIT THIS once Render gives you a URL:
-    return "wss://algolab-runner.onrender.com/ws/run";
+    return "wss://algorithms-zph7.onrender.com/ws/run";
   })();
 
   // Warm the Render free-tier dyno (cuts the first-run cold start) by hitting
