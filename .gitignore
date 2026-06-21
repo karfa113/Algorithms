@@ -1,0 +1,23 @@
+# ----- Python -----
+backend/.venv/
+backend/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ----- OS / editors -----
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# ----- Build artefacts -----
+*.exe
+*.out
+backend/algorun_*/
+
+# ----- Local logs -----
+*.log

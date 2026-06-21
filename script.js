@@ -180,19 +180,48 @@
 
         <div class="subsection">
           <h3>Implementation</h3>
-          <div class="code-block">
-            <div class="code-tabs">
-              <div class="tab-group" role="tablist">
-                <button class="tab-btn active" data-lang="c">C</button>
-                <button class="tab-btn" data-lang="cpp">C++</button>
+          <div class="code-runtime">
+            <div class="code-block">
+              <div class="code-tabs">
+                <div class="tab-group" role="tablist">
+                  <button class="tab-btn active" data-lang="c">C</button>
+                  <button class="tab-btn" data-lang="cpp">C++</button>
+                </div>
+                <button class="copy-btn" type="button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  Copy
+                </button>
               </div>
-              <button class="copy-btn" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                Copy
-              </button>
+              <div class="code-pane active" data-lang="c"><pre id="code-${a.id}-c">${highlight(a.c)}</pre></div>
+              <div class="code-pane"          data-lang="cpp"><pre id="code-${a.id}-cpp">${highlight(a.cpp)}</pre></div>
             </div>
-            <div class="code-pane active" data-lang="c"><pre>${highlight(a.c)}</pre></div>
-            <div class="code-pane"          data-lang="cpp"><pre>${highlight(a.cpp)}</pre></div>
+
+            <div class="terminal" data-state="idle">
+              <div class="terminal-head">
+                <span class="terminal-title">
+                  <span class="t-dot t-dot-r"></span>
+                  <span class="t-dot t-dot-y"></span>
+                  <span class="t-dot t-dot-g"></span>
+                  <span class="t-name">algo-${String(a.id).padStart(2, "0")} · terminal</span>
+                </span>
+                <span class="terminal-status">idle</span>
+                <div class="terminal-actions">
+                  <button class="run-btn" type="button" title="Compile and run">
+                    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+                    Run
+                  </button>
+                  <button class="clear-btn" type="button" title="Stop & clear terminal">Clear</button>
+                </div>
+              </div>
+              <div class="terminal-body">
+                <div class="terminal-output" aria-live="polite"></div>
+                <div class="terminal-input-line" hidden>
+                  <span class="prompt">&gt;</span>
+                  <input class="terminal-input" type="text" spellcheck="false"
+                         autocomplete="off" autocorrect="off" autocapitalize="off" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -253,6 +282,109 @@
     ta.select();
     try { document.execCommand("copy"); cb(); } catch {}
     document.body.removeChild(ta);
+  }
+
+  /* ----- Terminal: WebSocket-driven backend runner ----- */
+  function bindTerminal() {
+    const sessions = new WeakMap();   // code-block → { session, refs }
+
+    function getOrCreate(block) {
+      let s = sessions.get(block);
+      if (s) return s;
+
+      const terminal = block.querySelector(".terminal");
+      const outEl    = terminal.querySelector(".terminal-output");
+      const lineEl   = terminal.querySelector(".terminal-input-line");
+      const inputEl  = terminal.querySelector(".terminal-input");
+      const statusEl = terminal.querySelector(".terminal-status");
+      const runBtn   = terminal.querySelector(".run-btn");
+      const body     = terminal.querySelector(".terminal-body");
+
+      function append(text, cls) {
+        if (!text) return;
+        // Normalize CRLF (Windows backend) → LF for consistent rendering.
+        text = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+        const span = document.createElement("span");
+        if (cls) span.className = "t-" + cls;
+        span.textContent = text;
+        outEl.appendChild(span);
+        // Auto-scroll if user hasn't scrolled up manually.
+        body.scrollTop = body.scrollHeight;
+      }
+
+      const ui = {
+        write: append,
+        status(phase) {
+          terminal.dataset.state = phase;
+          statusEl.textContent = phase;
+        },
+        onReady() {
+          lineEl.hidden = false;
+          runBtn.disabled = true;
+          runBtn.classList.add("loading");
+          setTimeout(() => inputEl.focus(), 0);
+        },
+        onEnd() {
+          lineEl.hidden = true;
+          runBtn.disabled = false;
+          runBtn.classList.remove("loading");
+        },
+      };
+
+      const session = new window.AlgoRunner.TerminalSession(ui);
+
+      inputEl.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        const line = inputEl.value;
+        // Echo the user's typed line into the output stream so the terminal
+        // reads like a real session: prompt → typed input → next program output.
+        append(line + "\n", "in");
+        if (!session.sendInput(line)) {
+          append("[not connected]\n", "err");
+        }
+        inputEl.value = "";
+      });
+
+      // Click anywhere in the terminal body focuses the input (when visible),
+      // unless the user is actively selecting text to copy.
+      body.addEventListener("click", () => {
+        if (lineEl.hidden) return;
+        const sel = window.getSelection && window.getSelection().toString();
+        if (sel) return;
+        inputEl.focus();
+      });
+
+      s = { session, ui, outEl, statusEl, runBtn };
+      sessions.set(block, s);
+      return s;
+    }
+
+    container.addEventListener("click", (e) => {
+      const runBtn   = e.target.closest(".run-btn");
+      const clearBtn = e.target.closest(".clear-btn");
+      if (!runBtn && !clearBtn) return;
+
+      const runtime = (runBtn || clearBtn).closest(".code-runtime");
+      const s = getOrCreate(runtime);
+
+      if (clearBtn) {
+        s.session.stop();
+        s.outEl.textContent = "";
+        s.ui.status("idle");
+        s.ui.onEnd();
+        return;
+      }
+
+      const pane = runtime.querySelector(".code-pane.active");
+      if (!pane) return;
+      const lang = pane.dataset.lang;             // "c" or "cpp"
+      const code = pane.querySelector("pre").textContent;
+
+      s.outEl.textContent = "";
+      s.ui.status("connecting");
+      s.session.start(lang, code);
+    });
   }
 
   /* ----- Viva accordion ----- */
@@ -338,6 +470,7 @@
     renderAll();
     bindTabs();
     bindCopy();
+    bindTerminal();
     bindViva();
     bindScrollSpy();
     bindSearch();
