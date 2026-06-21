@@ -3,7 +3,10 @@ services:
     name: algolab-runner
     runtime: docker
     plan: free
-    rootDir: backend
-    dockerfilePath: ./Dockerfile
+    # dockerfilePath and dockerContext are relative to the REPO ROOT,
+    # not to rootDir. Spell them out so Render finds the Dockerfile
+    # inside backend/ instead of looking at the repo root.
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     healthCheckPath: /health
     autoDeploy: true
