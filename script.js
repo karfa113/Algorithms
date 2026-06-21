@@ -156,6 +156,10 @@
             <h2>${a.name}</h2>
             <div class="tags">${tagsHtml}</div>
           </div>
+          <a class="viz-launch" href="viz.html?algo=${a.id}" target="_blank" rel="noopener" title="Open interactive visualizer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+            <span>Visualize</span>
+          </a>
         </div>
 
         <div class="subsection">

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="Algorithm Lab — interactive visualizer" />
+<title>Visualizer · Algorithm Lab</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body class="viz-page">
+
+<!-- Animated background blobs (same as main page) -->
+<div class="bg-wrap" aria-hidden="true">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
+  <div class="blob blob-4"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<!-- Top navigation -->
+<header class="topbar glass">
+  <a class="brand" href="index.html" id="brandBack" title="Back to Algorithm Lab">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Algorithm Lab logo">
+        <path d="M12 7 L6 17 M12 7 L18 17"/>
+        <circle cx="12" cy="6" r="2.6" fill="currentColor"/>
+        <circle cx="6" cy="18" r="2.4" fill="currentColor"/>
+        <circle cx="18" cy="18" r="2.4" fill="currentColor"/>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <h1>Algorithm Lab</h1>
+      <span>Visualizer</span>
+    </div>
+  </a>
+
+  <nav class="topbar-actions">
+    <a href="index.html" class="btn ghost back-btn" title="Back to all algorithms">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back
+    </a>
+    <button id="themeToggle" class="icon-btn glass-btn" title="Toggle theme" aria-label="Toggle theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    </button>
+  </nav>
+</header>
+
+<main class="viz-main">
+  <!-- Heading card -->
+  <section class="viz-hero glass">
+    <div class="viz-hero-left">
+      <div class="viz-num" id="vizAlgoNum">--</div>
+      <div>
+        <span class="badge" id="vizAlgoTags"></span>
+        <h2 id="vizAlgoName">Loading visualizer…</h2>
+        <p id="vizAlgoConcept" class="muted"></p>
+      </div>
+    </div>
+    <div class="viz-hero-right">
+      <a id="vizAlgoLink" href="index.html" class="btn ghost" title="View full algorithm reference">
+        Open reference
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Visualizer mounts here -->
+  <section class="viz-host glass" id="vizHost"></section>
+
+  <!-- Quick navigation between algorithms -->
+  <nav class="viz-nav glass" id="vizNav">
+    <a id="vizPrev" class="viz-nav-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      Previous
+    </a>
+    <select id="vizPicker" aria-label="Jump to algorithm"></select>
+    <a id="vizNext" class="viz-nav-btn">
+      Next
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </a>
+  </nav>
+
+  <footer class="footer glass">
+    <p>Academy of Technology · Design &amp; Analysis of Algorithm Lab</p>
+    <p class="muted"><small>Visualizer · interactive playback · adjustable speed</small></p>
+  </footer>
+</main>
+
+<script src="data.js"></script>
+<script src="visualizer.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ----- Theme (mirrors script.js bindTheme so the page works standalone) -
+  const saved = localStorage.getItem("theme");
+  if (saved) document.documentElement.setAttribute("data-theme", saved);
+  document.getElementById("themeToggle").addEventListener("click", () => {
+    const cur = document.documentElement.getAttribute("data-theme");
+    const next = cur === "light" ? "" : "light";
+    if (next) document.documentElement.setAttribute("data-theme", next);
+    else      document.documentElement.removeAttribute("data-theme");
+    localStorage.setItem("theme", next);
+  });
+
+  // ----- Resolve target algorithm -----------------------------------------
+  const algos = window.ALGORITHMS || [];
+  const params = new URLSearchParams(location.search);
+  const askedId = parseInt(params.get("algo") || "1", 10);
+  const algo = algos.find(a => a.id === askedId) || algos[0];
+
+  if (!algo) {
+    document.getElementById("vizAlgoName").textContent = "No algorithms loaded.";
+    return;
+  }
+
+  // ----- Header content ----------------------------------------------------
+  document.title = `${algo.name} · Visualizer`;
+  document.getElementById("vizAlgoNum").textContent = String(algo.id).padStart(2, "0");
+  document.getElementById("vizAlgoName").textContent = algo.name;
+  document.getElementById("vizAlgoConcept").innerHTML = algo.concept || "";
+  document.getElementById("vizAlgoTags").innerHTML =
+    (algo.tags || []).map(t => `<span class="tag">${t}</span>`).join("");
+  document.getElementById("vizAlgoLink").href = "index.html#algo-" + algo.id;
+
+  // ----- Picker + prev/next -----------------------------------------------
+  const picker = document.getElementById("vizPicker");
+  algos.forEach(a => {
+    const opt = document.createElement("option");
+    opt.value = a.id;
+    opt.textContent = `${String(a.id).padStart(2, "0")} · ${a.short || a.name}`;
+    if (a.id === algo.id) opt.selected = true;
+    picker.appendChild(opt);
+  });
+  picker.addEventListener("change", () => {
+    location.search = "?algo=" + picker.value;
+  });
+
+  const idx = algos.findIndex(a => a.id === algo.id);
+  const prev = algos[(idx - 1 + algos.length) % algos.length];
+  const next = algos[(idx + 1) % algos.length];
+  const prevA = document.getElementById("vizPrev");
+  const nextA = document.getElementById("vizNext");
+  prevA.href = "viz.html?algo=" + prev.id;
+  prevA.title = `${prev.id}. ${prev.name}`;
+  nextA.href = "viz.html?algo=" + next.id;
+  nextA.title = `${next.id}. ${next.name}`;
+
+  // Keyboard: ←/→ navigate, space play/pause
+  document.addEventListener("keydown", (e) => {
+    if (e.target.matches("input, textarea, select")) return;
+    if (e.key === "ArrowLeft" && e.altKey)  { e.preventDefault(); location.href = prevA.href; }
+    if (e.key === "ArrowRight" && e.altKey) { e.preventDefault(); location.href = nextA.href; }
+    if (e.key === " ") {
+      const play = document.querySelector(".viz-play");
+      if (play) { e.preventDefault(); play.click(); }
+    }
+  });
+
+  // ----- Mount visualizer --------------------------------------------------
+  if (window.AlgoVisualizer && window.AlgoVisualizer.mount) {
+    window.AlgoVisualizer.mount(document.getElementById("vizHost"), algo.id);
+  } else {
+    document.getElementById("vizHost").innerHTML =
+      "<div class='viz-soon'>Visualizer script failed to load.</div>";
+  }
+})();
+</script>
+</body>
+</html>
