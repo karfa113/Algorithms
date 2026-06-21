@@ -618,20 +618,63 @@ h1, h2, h3,
   overflow: auto;
 }
 .code-pane.active { display: block; }
-.code-pane pre {
+.code-pane::-webkit-scrollbar { height: 8px; width: 8px; }
+.code-pane::-webkit-scrollbar-track { background: #050505; }
+.code-pane::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 4px; }
+.code-pane::-webkit-scrollbar-thumb:hover { background: var(--orange); }
+
+/* ----- Editable code overlay -----
+   The highlighted <pre> renders the syntax-coloured text and defines the
+   block's height. The transparent <textarea> sits directly on top, catches
+   keystrokes / selection / caret, and on every input the pre is re-highlighted
+   from the textarea's value. Pre and textarea MUST share font / size /
+   line-height / padding / tab-size byte-for-byte or the caret will drift
+   off the visible glyphs. */
+.code-edit-wrap {
+  position: relative;
+  display: block;
+  min-height: 100%;
+}
+.code-pane pre.code-highlight,
+.code-pane .code-textarea {
   margin: 0;
   padding: 18px 20px;
   font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
   font-size: .82rem;
   line-height: 1.65;
-  color: var(--code-text);
   white-space: pre;
   tab-size: 4;
+  -moz-tab-size: 4;
+  letter-spacing: 0;
+  border: 0;
+  box-sizing: border-box;
 }
-.code-pane::-webkit-scrollbar { height: 8px; width: 8px; }
-.code-pane::-webkit-scrollbar-track { background: #050505; }
-.code-pane::-webkit-scrollbar-thumb { background: var(--border-soft); border-radius: 4px; }
-.code-pane::-webkit-scrollbar-thumb:hover { background: var(--orange); }
+.code-pane pre.code-highlight {
+  display: block;
+  color: var(--code-text);
+  background: transparent;
+  pointer-events: none;     /* clicks fall through to the textarea */
+  min-height: 100%;
+}
+.code-pane .code-textarea {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  color: transparent;       /* glyphs come from the pre below */
+  caret-color: var(--orange);
+  outline: none;
+  resize: none;
+  overflow: hidden;         /* parent .code-pane handles scrolling */
+  display: block;
+}
+.code-pane .code-textarea::selection {
+  background: rgba(255, 122, 24, 0.28);
+}
+.code-pane .code-textarea::-moz-selection {
+  background: rgba(255, 122, 24, 0.28);
+}
 
 /* Syntax tokens — orange/grayscale palette */
 .tok-key { color: #ff9a4d; font-weight: 600; }
@@ -651,7 +694,8 @@ h1, h2, h3,
 /* ---------- Terminal: standalone black rectangle ---------- */
 .terminal {
   background: #000;
-  border: 1.5px solid #1a1a1a;
+  /* Same translucent orange as .code-block so the two cards visually match. */
+  border: 1.5px solid var(--code-border);
   border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow:

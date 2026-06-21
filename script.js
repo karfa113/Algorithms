@@ -192,8 +192,22 @@
                   Copy
                 </button>
               </div>
-              <div class="code-pane active" data-lang="c"><pre id="code-${a.id}-c">${highlight(a.c)}</pre></div>
-              <div class="code-pane"          data-lang="cpp"><pre id="code-${a.id}-cpp">${highlight(a.cpp)}</pre></div>
+              <div class="code-pane active" data-lang="c">
+                <div class="code-edit-wrap">
+                  <pre class="code-highlight" id="code-${a.id}-c">${highlight(a.c)}</pre>
+                  <textarea class="code-textarea" spellcheck="false"
+                            autocomplete="off" autocorrect="off" autocapitalize="off"
+                            wrap="off" data-algo-id="${a.id}" data-lang="c"></textarea>
+                </div>
+              </div>
+              <div class="code-pane" data-lang="cpp">
+                <div class="code-edit-wrap">
+                  <pre class="code-highlight" id="code-${a.id}-cpp">${highlight(a.cpp)}</pre>
+                  <textarea class="code-textarea" spellcheck="false"
+                            autocomplete="off" autocorrect="off" autocapitalize="off"
+                            wrap="off" data-algo-id="${a.id}" data-lang="cpp"></textarea>
+                </div>
+              </div>
             </div>
 
             <div class="terminal" data-state="idle">
@@ -251,15 +265,53 @@
     });
   }
 
+  /* ----- Live-editable code overlay -----
+     Each code-pane has a syntax-highlighted <pre> with a transparent
+     <textarea> overlaid on top. Typing in the textarea re-highlights the
+     pre. Edits live only until page refresh. */
+  function bindCodeEditor() {
+    container.querySelectorAll(".code-textarea").forEach(ta => {
+      const id  = parseInt(ta.dataset.algoId, 10);
+      const algo = algos.find(a => a.id === id);
+      if (!algo) return;
+      // Seed from data.js so we never have to HTML-escape the source.
+      ta.value = algo[ta.dataset.lang] || "";
+    });
+
+    const rehighlight = ta => {
+      const pre = ta.parentElement.querySelector(".code-highlight");
+      if (pre) pre.innerHTML = highlight(ta.value);
+    };
+
+    container.addEventListener("input", e => {
+      const ta = e.target.closest(".code-textarea");
+      if (ta) rehighlight(ta);
+    });
+
+    // Tab inserts 4 spaces instead of moving focus (standard editor UX).
+    container.addEventListener("keydown", e => {
+      if (e.key !== "Tab") return;
+      const ta = e.target.closest(".code-textarea");
+      if (!ta) return;
+      e.preventDefault();
+      const SPACES = "    ";
+      const s = ta.selectionStart, end = ta.selectionEnd;
+      ta.value = ta.value.slice(0, s) + SPACES + ta.value.slice(end);
+      ta.selectionStart = ta.selectionEnd = s + SPACES.length;
+      rehighlight(ta);
+    });
+  }
+
   /* ----- Copy buttons ----- */
   function bindCopy() {
     container.addEventListener("click", e => {
       const btn = e.target.closest(".copy-btn");
       if (!btn) return;
       const block = btn.closest(".code-block");
-      const active = block.querySelector(".code-pane.active pre");
-      if (!active) return;
-      const text = active.innerText;
+      const ta = block.querySelector(".code-pane.active .code-textarea");
+      const pre = block.querySelector(".code-pane.active .code-highlight");
+      if (!ta && !pre) return;
+      const text = ta ? ta.value : pre.innerText;
       const ok = () => {
         btn.classList.add("copied");
         const original = btn.innerHTML;
@@ -379,7 +431,10 @@
       const pane = runtime.querySelector(".code-pane.active");
       if (!pane) return;
       const lang = pane.dataset.lang;             // "c" or "cpp"
-      const code = pane.querySelector("pre").textContent;
+      // Read the live textarea value, not the original highlighted pre, so
+      // the user's in-place edits are what we compile.
+      const ta = pane.querySelector(".code-textarea");
+      const code = ta ? ta.value : pane.querySelector("pre").textContent;
 
       s.outEl.textContent = "";
       s.ui.status("connecting");
@@ -469,6 +524,7 @@
     buildLists();
     renderAll();
     bindTabs();
+    bindCodeEditor();
     bindCopy();
     bindTerminal();
     bindViva();
