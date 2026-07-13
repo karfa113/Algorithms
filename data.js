@@ -771,48 +771,82 @@ int main() {
     "<strong>Step 8:</strong> Stop."
   ],
   complexity: { best: "O(n log n)", avg: "O(n log n)", worst: "O(n log n)", space: "O(n)" },
-  c: `#include <stdio.h>
-#define MAX 100
+  c: `#include<stdio.h>
 
-typedef struct { float weight, value, ratio; } Item;
+struct Item{
+    float profit, weight, ratio;
+};
 
-void sortByRatio(Item items[], int n) {
-    for (int i = 0; i < n - 1; i++)
-        for (int j = 0; j < n - i - 1; j++)
-            if (items[j].ratio < items[j + 1].ratio) {
-                Item t = items[j]; items[j] = items[j+1]; items[j+1] = t;
-            }
+void swap(struct Item *a, struct Item *b){
+    struct Item temp = *a;
+    *a = *b;
+    *b = temp;
 }
 
-float fractionalKnapsack(Item items[], int n, float W) {
-    sortByRatio(items, n);
-    float totalValue = 0;
-    for (int i = 0; i < n && W > 0; i++) {
-        if (items[i].weight <= W) {
-            totalValue += items[i].value;
-            W -= items[i].weight;
-        } else {
-            totalValue += items[i].ratio * W;
-            W = 0;
+int partition(struct Item arr[], int low, int high){
+    float pivot = arr[high].ratio;
+    int i = low -1;
+    
+    for(int j=0; j<high; j++){
+        if(arr[j].ratio > pivot){
+            swap(&arr[++i], &arr[j]);
         }
     }
-    return totalValue;
+
+    swap(&arr[i+1], &arr[high]);
+    return i+1;
 }
 
-int main(void) {
-    int n;
-    float W;
-    printf("Number of items: "); scanf("%d", &n);
-    Item items[MAX];
-    printf("Enter weight and value of each item:\\n");
-    for (int i = 0; i < n; i++) {
-        scanf("%f %f", &items[i].weight, &items[i].value);
-        items[i].ratio = items[i].value / items[i].weight;
-    }
-    printf("Capacity: "); scanf("%f", &W);
+void quickSort(struct Item arr[], int low, int high){
 
-    float ans = fractionalKnapsack(items, n, W);
-    printf("Maximum value = %.2f\\n", ans);
+    if(low < high){
+        int pi = partition(arr, low, high);
+        quickSort(arr, low, pi-1);
+        quickSort(arr, pi+1, high);
+    }
+}
+
+int main(){
+    int n;
+    float totalProfit, c;
+    printf("Enter number of items: ");
+    scanf("%d", &n);
+
+    struct Item items[n];
+
+    for(int i=0; i<n; i++){
+        printf("Enter profit and weight for item[%d]: ", i+1);
+        scanf("%f %f", &items[i].profit, &items[i].weight);
+        items[i].ratio = items[i].profit/ items[i].weight;
+    }
+
+    printf("Enter the knapsack capacity: ");
+    scanf("%f", &c);
+
+    quickSort(items, 0, n-1);
+
+    printf("\nList of items sorted by p/w ratio: \n");
+    printf("Profit\tWeight\tRatio\n");
+    for(int i=0; i<n; i++){
+        printf("%.2f \t%.2f \t%.2f\n", items[i].profit, items[i].weight, items[i].ratio);
+    }
+
+    printf("\nSelected items: \n");
+    for(int i=0; i<n; i++){
+        if(items[i].weight < c){
+            printf("Item %d is taken fully\n", i+1);
+            c -= items[i].weight;
+            totalProfit += items[i].profit;
+        }else{
+            float frac = c / items[i].weight;
+            printf("%.2f fraction of item %d is taken\n", frac, i+1);
+            c = 0;
+            totalProfit += items[i].profit * frac;
+            break;
+        }
+    }
+
+    printf("\nMaximum profit: %.2f\n", totalProfit);
     return 0;
 }`,
   cpp: `#include <iostream>
@@ -884,49 +918,109 @@ int main() {
     "<strong>Step 8:</strong> Stop."
   ],
   complexity: { best: "O(n²)", avg: "O(n²)", worst: "O(n²)", space: "O(n)" },
-  c: `#include <stdio.h>
+  c: `#include<stdio.h>
 
-typedef struct { char id; int deadline, profit; } Job;
+struct Job{
+    int id, deadline, profit;
+};
 
-void sortJobs(Job jobs[], int n) {
-    for (int i = 0; i < n - 1; i++)
-        for (int j = 0; j < n - i - 1; j++)
-            if (jobs[j].profit < jobs[j + 1].profit) {
-                Job t = jobs[j]; jobs[j] = jobs[j+1]; jobs[j+1] = t;
-            }
-}
-
-int maxDeadline(Job jobs[], int n) {
+int maxDeadline(struct Job jobs[], int n){
     int m = 0;
-    for (int i = 0; i < n; i++) if (jobs[i].deadline > m) m = jobs[i].deadline;
+    for(int i=0; i<n; i++){
+        if(jobs[i].deadline > m) m = jobs[i].deadline;
+    }
     return m;
 }
 
-void jobSequencing(Job jobs[], int n) {
-    sortJobs(jobs, n);
-    int M = maxDeadline(jobs, n);
-    char slot[M];           int used[M];
-    for (int i = 0; i < M; i++) used[i] = 0;
+void merge(struct Job jobs[], int low, int mid, int high){
+    int n1 = mid - low + 1;
+    int n2 = high - mid;
 
-    int totalProfit = 0;
-    for (int i = 0; i < n; i++) {
-        for (int t = (jobs[i].deadline < M ? jobs[i].deadline : M) - 1; t >= 0; t--)
-            if (!used[t]) { slot[t] = jobs[i].id; used[t] = 1; totalProfit += jobs[i].profit; break; }
+    struct Job l[n1], r[n2];
+
+    for(int i=0; i<n1; i++) l[i] = jobs[low+i];
+    for(int i=0; i<n2; i++) r[i] = jobs[mid+1+i];
+
+    int i=0, j=0, k=low;
+
+    while(i<n1 && j<n2){
+        if(l[i].profit < r[j].profit){
+            jobs[k++] = r[j++];
+        }else{
+            jobs[k++] = l[i++];
+        }
     }
 
-    printf("Scheduled jobs: ");
-    for (int i = 0; i < M; i++) if (used[i]) printf("%c ", slot[i]);
-    printf("\\nTotal profit = %d\\n", totalProfit);
+    while(i<n1) jobs[k++] = l[i++];
+    while(j<n2) jobs[k++] = r[j++];
 }
 
-int main(void) {
+void mergeSort(struct Job jobs[], int low, int high){
+    if(low < high){
+        int mid = (low + high) / 2;
+        mergeSort(jobs, low, mid);
+        mergeSort(jobs, mid+1, high);
+        merge(jobs, low, mid, high);
+    }
+}
+
+void jobSequencing(struct Job jobs[], int n){
+    mergeSort(jobs, 0, n-1);
+
+    int m = maxDeadline(jobs, n);
+
+    int slot[m+1], used[m+1];
+    int totalProfit = 0;
+
+    for(int i=0; i<=m; i++){
+        used[i] = 0;
+        slot[i] = -1;
+    }
+
+    for(int i=0; i<n; i++){
+        for(int j=jobs[i].deadline; j>=1; j--){
+            if(!used[j]){
+                used[j] = 1;
+                slot[j] = i;
+                totalProfit += jobs[i].profit;
+                break;
+            }
+        }
+    }
+
+    printf("\nScheduled jobs:\n");
+    for(int i=1; i<=m; i++){
+        if(slot[i] != -1){
+            printf("Slot %d is occupied by Job J%d\n", i, jobs[slot[i]].id);
+        }
+    }
+
+    printf("Total Profit: %d\n", totalProfit);
+}
+
+int main(){
     int n;
-    printf("Number of jobs: "); scanf("%d", &n);
-    Job jobs[n];
-    printf("Enter id deadline profit:\\n");
-    for (int i = 0; i < n; i++)
-        scanf(" %c %d %d", &jobs[i].id, &jobs[i].deadline, &jobs[i].profit);
+
+    printf("Enter number of jobs: ");
+    scanf("%d", &n);
+
+    struct Job jobs[n];
+
+    printf("Enter job details:\n");
+    for(int i=0; i<n; i++){
+        jobs[i].id = i+1;
+        printf("Enter deadline and profit of Job %d: ", i+1);
+        scanf("%d %d", &jobs[i].deadline, &jobs[i].profit);
+    }
+
+    printf("\nEntered jobs:\n");
+    printf("ID\tDeadline\tProfit\n");
+    for(int i=0; i<n; i++){
+        printf("J%d\t%d\t\t%d\n", jobs[i].id, jobs[i].deadline, jobs[i].profit);
+    }
+
     jobSequencing(jobs, n);
+
     return 0;
 }`,
   cpp: `#include <iostream>
@@ -1001,48 +1095,84 @@ int main() {
     "<strong>Step 8:</strong> Stop."
   ],
   complexity: { best: "O(E log E)", avg: "O(E log E)", worst: "O(E log E)", space: "O(V + E)" },
-  c: `#include <stdio.h>
-#include <stdlib.h>
+  c: `#include<stdio.h>
+#define MAX 30
 
-typedef struct { int u, v, w; } Edge;
+struct Edge{
+    int u,v,w;
+};
 
-int parent[100], rnk[100];
+struct Edge edges[MAX], temp[MAX];
+int parent[MAX];
 
-int find(int x) { return parent[x] == x ? x : (parent[x] = find(parent[x])); }
-void unite(int a, int b) {
-    a = find(a); b = find(b);
-    if (a == b) return;
-    if (rnk[a] < rnk[b]) parent[a] = b;
-    else if (rnk[a] > rnk[b]) parent[b] = a;
-    else { parent[b] = a; rnk[a]++; }
+int find(int v){
+    while(parent[v] != v) v = parent[v];
+    return v;
 }
 
-int cmp(const void *a, const void *b) {
-    return ((Edge*)a)->w - ((Edge*)b)->w;
+void uni(int a, int b){
+    parent[b]=a;
 }
 
-int main(void) {
-    int n, e;
-    printf("Vertices: "); scanf("%d", &n);
-    printf("Edges: ");    scanf("%d", &e);
-    Edge edges[e];
-    printf("Enter u v w for each edge:\\n");
-    for (int i = 0; i < e; i++) scanf("%d %d %d", &edges[i].u, &edges[i].v, &edges[i].w);
+void merge(int low, int mid, int high){
+    int i=low, j=mid+1, k=low;
 
-    qsort(edges, e, sizeof(Edge), cmp);
-    for (int i = 0; i < n; i++) { parent[i] = i; rnk[i] = 0; }
-
-    int totalCost = 0, taken = 0;
-    printf("MST edges:\\n");
-    for (int i = 0; i < e && taken < n - 1; i++) {
-        if (find(edges[i].u) != find(edges[i].v)) {
-            unite(edges[i].u, edges[i].v);
-            printf("%d - %d : %d\\n", edges[i].u, edges[i].v, edges[i].w);
-            totalCost += edges[i].w;
-            taken++;
+    while(i<=mid && j<=high){
+        if(edges[i].w < edges[j].w){
+            temp[k++] = edges[i++];
+        }else{
+            temp[k++] = edges[j++];
         }
     }
-    printf("Total cost = %d\\n", totalCost);
+
+    while(i<=mid) temp[k++] = edges[i++];
+    while(j<=high) temp[k++] = edges[j++];
+
+    for(i=low; i<=high; i++){
+        edges[i] = temp[i];
+    }
+}
+
+void mergeSort(int low, int high){
+    if(low<high){
+        int mid = (low+high)/2;
+        mergeSort(low, mid);
+        mergeSort(mid+1, high);
+        merge(low, mid, high);
+    }
+}
+
+int main(){
+    int e,v, totalWeight = 0, count = 0;
+    printf("Enter number of vertices and edges: ");
+    scanf("%d%d", &v, &e);
+
+    printf("Enter the edge list: \n");
+    for(int i=0; i<e; i++){
+        printf("Enter source destination and weight of edge %d: ", i);
+        scanf("%d%d%d", &edges[i].u, &edges[i].v, &edges[i].w);
+    }
+
+    mergeSort(0, e-1);
+
+    for(int i=0; i<v; i++){
+        parent[i] = i;
+    }
+
+    printf("\nEdges in MST: \n");
+    for(int i=0; i<e && count<v-1; i++){
+        int a = find(edges[i].u);
+        int b = find(edges[i].v);
+
+        if(a!=b){
+            printf("%d ---- %d: %d\n", edges[i].u, edges[i].v, edges[i].w);
+            count += 1;
+            totalWeight += edges[i].w;
+            uni(a,b);
+        }
+    }
+    printf("Total cost of minimum spanning tree: %d", totalWeight);
+
     return 0;
 }`,
   cpp: `#include <iostream>
@@ -1121,49 +1251,59 @@ int main() {
     "<strong>Step 8:</strong> Stop."
   ],
   complexity: { best: "O(V²)", avg: "O(V²)", worst: "O(V²)", space: "O(V)" },
-  c: `#include <stdio.h>
-#include <limits.h>
-#define V 100
+  c: `#include<stdio.h>
 
-int graph[V][V], n;
+#define MAX 20
+#define INF 9999
 
-int minKey(int key[], int inMST[]) {
-    int min = INT_MAX, minIndex = -1;
-    for (int v = 0; v < n; v++)
-        if (!inMST[v] && key[v] < min) { min = key[v]; minIndex = v; }
-    return minIndex;
-}
+int adj[MAX][MAX], n;
 
-void primMST() {
-    int parent[V], key[V], inMST[V];
-    for (int i = 0; i < n; i++) { key[i] = INT_MAX; inMST[i] = 0; parent[i] = -1; }
-    key[0] = 0;
+void prims(){
+    int visited[MAX] = {0};
+    int total=0,min,u,v;
 
-    for (int count = 0; count < n - 1; count++) {
-        int u = minKey(key, inMST);
-        inMST[u] = 1;
-        for (int v = 0; v < n; v++)
-            if (graph[u][v] && !inMST[v] && graph[u][v] < key[v]) {
-                parent[v] = u;
-                key[v] = graph[u][v];
+    visited[0] = 1;
+
+    printf("\nEdged in MST:\n");
+
+    for(int i=0; i<n-1; i++){
+        min = INF;
+        for(int j=0; j<n; j++){
+            if(visited[j]){
+                for(int k=0; k<n; k++){
+                    if(!visited[k] && adj[j][k]<min){
+                        min = adj[j][k];
+                        u=j;
+                        v=k;
+                    }
+                }
             }
+        }
+
+        printf("%d ---- %d: %d\n", u,v,min);
+        total+=min;
+        visited[v] = 1;
     }
 
-    int total = 0;
-    printf("Edge\\tWeight\\n");
-    for (int i = 1; i < n; i++) {
-        printf("%d - %d\\t%d\\n", parent[i], i, graph[i][parent[i]]);
-        total += graph[i][parent[i]];
-    }
-    printf("Total cost = %d\\n", total);
+    printf("Minimum cost: %d", total);
 }
 
-int main(void) {
-    printf("Vertices: "); scanf("%d", &n);
-    printf("Enter adjacency matrix (%d x %d), 0 if no edge:\\n", n, n);
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++) scanf("%d", &graph[i][j]);
-    primMST();
+int main(void){
+    printf("Enter number of vertices: ");
+    scanf("%d", &n);
+
+    printf("Enter the adjacency matrix: \n");
+    for(int i=0; i<n; i++){
+        for(int j=0; j<n; j++){
+            scanf("%d", &adj[i][j]);
+
+            if(i!=j && adj[i][j] == 0){
+                adj[i][j] = INF;
+            }
+        }
+    }
+
+    prims();
     return 0;
 }`,
   cpp: `#include <iostream>
@@ -1238,45 +1378,67 @@ int main() {
     "<strong>Step 7:</strong> Stop."
   ],
   complexity: { best: "O(V²)", avg: "O(V²)", worst: "O(V²)", space: "O(V)" },
-  c: `#include <stdio.h>
-#include <limits.h>
-#define V 100
+  c: `#include<stdio.h>
+#define MAX 20
+#define INF 9999
 
-int graph[V][V], n;
+int adj[MAX][MAX], n;
 
-int minDist(int dist[], int visited[]) {
-    int min = INT_MAX, idx = -1;
-    for (int v = 0; v < n; v++)
-        if (!visited[v] && dist[v] < min) { min = dist[v]; idx = v; }
-    return idx;
-}
+void dijkstra(int src){
+    int visited[MAX] = {0}, dist[MAX];
+    int min,u;
 
-void dijkstra(int src) {
-    int dist[V], visited[V];
-    for (int i = 0; i < n; i++) { dist[i] = INT_MAX; visited[i] = 0; }
-    dist[src] = 0;
-
-    for (int count = 0; count < n - 1; count++) {
-        int u = minDist(dist, visited);
-        if (u == -1) break;
-        visited[u] = 1;
-        for (int v = 0; v < n; v++)
-            if (!visited[v] && graph[u][v] && dist[u] != INT_MAX
-                && dist[u] + graph[u][v] < dist[v])
-                    dist[v] = dist[u] + graph[u][v];
+    for(int i=0; i<n; i++){
+        dist[i]=INF;
     }
 
-    printf("Vertex\\tDistance from %d\\n", src);
-    for (int i = 0; i < n; i++) printf("%d\\t%d\\n", i, dist[i]);
+    dist[src]=0;
+
+    for(int i=0; i<n-1; i++){
+        min=INF;
+
+        for(int j=0; j<n; j++){
+            if(!visited[j] && dist[j]<min){
+                min=dist[j];
+                u=j;
+            }
+        }
+
+        visited[u] = 1;
+
+        for(int j=0; j<n; j++){
+            if(!visited[j] && adj[u][j]!=INF && dist[u]+adj[u][j]<dist[j]){
+                dist[j]=dist[u]+adj[u][j];
+            }
+        }
+    }
+
+    printf("\nShortest distances from vertex %d\n", src);
+    for(int i=0; i<n; i++){
+        printf("%d ---- %d: %d\n", src, i, dist[i]);
+    }
 }
 
-int main(void) {
+int main(void){
     int src;
-    printf("Vertices: "); scanf("%d", &n);
-    printf("Adjacency matrix (0 if no edge):\\n");
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++) scanf("%d", &graph[i][j]);
-    printf("Source: "); scanf("%d", &src);
+
+    printf("Enter the number of vertex: ");
+    scanf("%d", &n);
+
+    printf("Enter adjacency matrix: \n");
+    for(int i=0; i<n; i++){
+        for(int j=0; j<n; j++){
+            scanf("%d", &adj[i][j]);
+
+            if(i!=j && adj[i][j] ==0){
+                adj[i][j]=INF;
+            }
+        }
+    }
+
+    printf("Enter source vertex: ");
+    scanf("%d", &src);
+
     dijkstra(src);
     return 0;
 }`,
@@ -1348,43 +1510,70 @@ int main() {
     "<strong>Step 8:</strong> Stop."
   ],
   complexity: { best: "O(VE)", avg: "O(VE)", worst: "O(VE)", space: "O(V)" },
-  c: `#include <stdio.h>
-#include <limits.h>
+  c: `#include<stdio.h>
+#define MAX 20
+#define INF 9999
 
-typedef struct { int u, v, w; } Edge;
+struct Edge{
+    int u,v,w;
+};
 
-int main(void) {
-    int n, e, src;
-    printf("Vertices: "); scanf("%d", &n);
-    printf("Edges: ");    scanf("%d", &e);
-    Edge edges[e];
-    printf("u v w:\\n");
-    for (int i = 0; i < e; i++) scanf("%d %d %d", &edges[i].u, &edges[i].v, &edges[i].w);
-    printf("Source: "); scanf("%d", &src);
+struct Edge edges[MAX];
+int n,e;
 
-    long dist[n];
-    for (int i = 0; i < n; i++) dist[i] = LONG_MAX;
-    dist[src] = 0;
+void bellman(int src){
+    int dist[MAX];
+    
+    for(int i=0; i<n; i++){
+        dist[i] = INF;
+    }
 
-    for (int i = 0; i < n - 1; i++)
-        for (int j = 0; j < e; j++) {
-            int u = edges[j].u, v = edges[j].v, w = edges[j].w;
-            if (dist[u] != LONG_MAX && dist[u] + w < dist[v]) dist[v] = dist[u] + w;
-        }
+    dist[src]=0;
 
-    /* Detect negative cycle */
-    for (int j = 0; j < e; j++) {
-        int u = edges[j].u, v = edges[j].v, w = edges[j].w;
-        if (dist[u] != LONG_MAX && dist[u] + w < dist[v]) {
-            printf("Negative-weight cycle detected.\\n"); return 0;
+    for(int i=0; i<n-1; i++){
+        for(int j=0; j<e; j++){
+            int u = edges[j].u;
+            int v = edges[j].v;
+            int w = edges[j].w;
+
+            if(dist[u]!=INF && dist[u]+w<dist[v]){
+                dist[v]=dist[u]+w;
+            }
         }
     }
 
-    printf("Vertex\\tDistance from %d\\n", src);
-    for (int i = 0; i < n; i++) {
-        if (dist[i] == LONG_MAX) printf("%d\\tINF\\n", i);
-        else                     printf("%d\\t%ld\\n", i, dist[i]);
+    for(int i=0; i<e; i++){
+        int u=edges[i].u;
+        int v=edges[i].v;
+        int w=edges[i].w;
+
+        if(dist[u]!=INF && dist[u]+w<dist[v]){
+            printf("\nNegative weighted cycle exists\n");
+            return;
+        }
     }
+
+    printf("\nShortest distances form vertex %d: \n", src);
+
+    for(int i=0; i<n; i++){
+        printf("%d ---- %d: %d\n", src, i, dist[i]);
+    }
+}
+
+int main(void){
+    printf("Enter number of vertices and edges: ");
+    scanf("%d%d", &n, &e);
+
+    printf("Enter source, destination and weight for every edge: \n");
+    for(int i=0; i<e; i++){
+        scanf("%d%d%d", &edges[i].u, &edges[i].v, &edges[i].w);
+    }
+
+    int src;
+    printf("Enter source vertex: ");
+    scanf("%d", &src);
+
+    bellman(src);
     return 0;
 }`,
   cpp: `#include <iostream>
@@ -1644,42 +1833,65 @@ int main() {
     "<strong>Step 8:</strong> Stop."
   ],
   complexity: { best: "O(N!)", avg: "O(N!)", worst: "O(N!)", space: "O(N²)" },
-  c: `#include <stdio.h>
+  c: `#include<stdio.h>
 #define MAX 20
 
 int board[MAX][MAX], N;
 
-void printBoard(void) {
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) printf("%c ", board[i][j] ? 'Q' : '.');
-        printf("\\n");
+void printBoard(){
+    for(int i=0; i<N; i++){
+        for(int j=0; j<N; j++){
+            printf("%c ", board[i][j] ? 'Q':'.');
+        }
+        printf("\n");
     }
 }
 
-int isSafe(int row, int col) {
-    for (int i = 0; i < col; i++) if (board[row][i]) return 0;
-    for (int i = row, j = col; i >= 0 && j >= 0; i--, j--) if (board[i][j]) return 0;
-    for (int i = row, j = col; i < N && j >= 0; i++, j--) if (board[i][j]) return 0;
+int isSafe(int row, int col){
+    for(int i=0; i<col; i++){
+        if(board[row][i]) return 0;
+    }
+
+    for(int i=row, j=col; i>=0 && j>=0; i--, j--){
+        if(board[i][j]) return 0;
+    }
+
+    for(int i=row, j=col; i<N && j>=0; i++, j--){
+        if(board[i][j]) return 0;
+    }
+
     return 1;
 }
 
-int solve(int col) {
-    if (col >= N) return 1;
-    for (int i = 0; i < N; i++) {
-        if (isSafe(i, col)) {
-            board[i][col] = 1;
-            if (solve(col + 1)) return 1;
-            board[i][col] = 0;     /* backtrack */
+int solve(int col){
+    if(col>=N) return 1;
+
+    for(int i=0; i<N; i++){
+        if(isSafe(i, col)){
+            board[i][col]=1;
+            if(solve(col+1)) return 1;
+            board[i][col]=0;
         }
     }
+
     return 0;
 }
 
-int main(void) {
-    printf("Enter N: "); scanf("%d", &N);
-    for (int i = 0; i < N; i++) for (int j = 0; j < N; j++) board[i][j] = 0;
-    if (solve(0)) printBoard();
-    else          printf("No solution exists.\\n");
+int main(void){
+    printf("Enter number of rows of the chess board: ");
+    scanf("%d", &N);
+
+    for(int i=0; i<N; i++){
+        for(int j=0; j<N; j++){
+            board[i][j]=0;
+        }
+    }
+
+    if(solve(0)) 
+        printBoard();
+    else    
+        printf("No solution exists\n");
+
     return 0;
 }`,
   cpp: `#include <iostream>
