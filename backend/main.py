@@ -1,16 +1,16 @@
 """
-Algorithm Lab — compile-and-run backend.
+DSA Lab — compile-and-run backend.
 
 WebSocket /ws/run:
   Client -> Server:
-    {"type": "run",   "lang": "c"|"cpp", "code": "..."}     # first message; required
+    {"type": "run",   "lang": "c"|"cpp"|"java", "code": "..."}     # first message; required
     {"type": "input", "data": "..."}                         # subsequent stdin lines
     {"type": "kill"}                                         # terminate current run
   Server -> Client:
     {"type": "status",        "phase": "compiling"|"running"}
     {"type": "stdout",        "data": "..."}
     {"type": "stderr",        "data": "..."}
-    {"type": "compile_error", "data": "..."}                 # gcc/g++ stderr
+    {"type": "compile_error", "data": "..."}                 # gcc/g++/javac stderr
     {"type": "error",         "message": "..."}              # server-side problem
     {"type": "exit",          "code": <int>, "time_ms": <int>}
 
@@ -24,6 +24,7 @@ import json
 import logging
 import os
 import platform
+import re
 import shutil
 import signal
 import tempfile
@@ -43,6 +44,7 @@ if IS_POSIX:
 
 # ----- Knobs -----
 COMPILE_TIMEOUT      = 10                   # seconds for gcc/g++ itself
+JAVA_COMPILE_TIMEOUT = 40                   # javac boots a JVM; slow on free-tier CPUs
 RUN_WALL_TIMEOUT     = 30                   # seconds the program may run (allows for interactive input)
 RUN_CPU_SECONDS      = 15                   # POSIX rlimit on CPU time
 RUN_MEM_BYTES        = 256 * 1024 * 1024    # 256 MB virtual memory
@@ -99,9 +101,40 @@ LANG_CONFIG = {
         "flags":    ["-O0", "-w", "-std=c++17", "-lm"],
         "preamble": _UNBUFFER_PREAMBLE_CPP,
     },
+    # Java is handled by its own code path (class-name detection, JVM flags).
+    "java": {
+        "compiler": "javac",
+        "runtime":  "java",
+    },
 }
 
-app = FastAPI(title="Algorithm Lab Runner")
+# JVM flags: small heap + serial GC keep a run inside a 512 MB container.
+# RLIMIT_AS is NOT applied to the JVM (it reserves huge virtual ranges).
+JAVAC_FLAGS = ["-J-Xmx192m", "-J-XX:+UseSerialGC", "-J-XX:TieredStopAtLevel=1",
+               "-J-Xshare:auto", "-nowarn", "-encoding", "UTF-8"]
+JAVA_FLAGS  = ["-Xmx128m", "-Xss16m", "-XX:+UseSerialGC", "-XX:TieredStopAtLevel=1",
+               "-XX:MaxMetaspaceSize=64m", "-XX:ReservedCodeCacheSize=32m",
+               "-Xshare:auto", "-Dfile.encoding=UTF-8"]
+
+_JAVA_PUBLIC_CLASS = re.compile(r"public\s+(?:final\s+|abstract\s+)*class\s+([A-Za-z_$][\w$]*)")
+_JAVA_ANY_CLASS    = re.compile(r"\bclass\s+([A-Za-z_$][\w$]*)")
+_JAVA_MAIN         = re.compile(r"static\s+void\s+main\s*\(")
+
+
+def java_main_class(code: str) -> str:
+    """javac insists the file be named after the public class, so figure out
+    what to call it. Prefer the public class; else the first class that has a
+    main(); else 'Main'."""
+    m = _JAVA_PUBLIC_CLASS.search(code)
+    if m:
+        return m.group(1)
+    for m in _JAVA_ANY_CLASS.finditer(code):
+        if _JAVA_MAIN.search(code, m.end()):
+            return m.group(1)
+    return "Main"
+
+
+app = FastAPI(title="DSA Lab Runner")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],          # tighten to GH Pages origin in production
@@ -110,13 +143,14 @@ app.add_middleware(
 )
 
 
-def _apply_limits():
+def _apply_limits(limit_address_space: bool = True):
     """preexec_fn — applied inside the forked child before exec."""
     resource.setrlimit(resource.RLIMIT_CPU,   (RUN_CPU_SECONDS, RUN_CPU_SECONDS))
-    try:
-        resource.setrlimit(resource.RLIMIT_AS, (RUN_MEM_BYTES, RUN_MEM_BYTES))
-    except (ValueError, OSError):
-        pass  # macOS doesn't always honour RLIMIT_AS — don't block startup
+    if limit_address_space:
+        try:
+            resource.setrlimit(resource.RLIMIT_AS, (RUN_MEM_BYTES, RUN_MEM_BYTES))
+        except (ValueError, OSError):
+            pass  # macOS doesn't always honour RLIMIT_AS — don't block startup
     try:
         resource.setrlimit(resource.RLIMIT_NPROC, (RUN_MAX_PROCS, RUN_MAX_PROCS))
     except (ValueError, OSError):
@@ -217,22 +251,34 @@ async def _compile_and_run(ws: WebSocket, lang: str, code: str):
         return
 
     cfg = LANG_CONFIG[lang]
-    if not _has_cmd(cfg["compiler"]):
-        await _send(ws, {"type": "error", "message": f"{cfg['compiler']} not installed on server."})
-        return
+    is_java = lang == "java"
+    needed = [cfg["compiler"]] + ([cfg["runtime"]] if is_java else [])
+    for tool in needed:
+        if not _has_cmd(tool):
+            await _send(ws, {"type": "error", "message": f"{tool} not installed on server."})
+            return
 
     tmp = Path(tempfile.mkdtemp(prefix="algorun_"))
-    src = tmp / f"main{cfg['ext']}"
     binp = tmp / ("main.exe" if not IS_POSIX else "main")
+    main_class = None
 
     try:
-        # Prepend the unbuffering preamble so prompts without trailing \n
-        # appear before the program blocks on scanf/cin.
-        src.write_text(cfg["preamble"] + code, encoding="utf-8")
+        if is_java:
+            main_class = java_main_class(code)
+            src = tmp / f"{main_class}.java"
+            src.write_text(code, encoding="utf-8")
+            compile_cmd = [cfg["compiler"], *JAVAC_FLAGS, "-d", str(tmp), str(src)]
+            compile_timeout = JAVA_COMPILE_TIMEOUT
+        else:
+            # Prepend the unbuffering preamble so prompts without trailing \n
+            # appear before the program blocks on scanf/cin.
+            src = tmp / f"main{cfg['ext']}"
+            src.write_text(cfg["preamble"] + code, encoding="utf-8")
+            compile_cmd = [cfg["compiler"], str(src), "-o", str(binp), *cfg["flags"]]
+            compile_timeout = COMPILE_TIMEOUT
 
         # ---- Compile ----
         await _send(ws, {"type": "status", "phase": "compiling"})
-        compile_cmd = [cfg["compiler"], str(src), "-o", str(binp), *cfg["flags"]]
         try:
             cp = await asyncio.create_subprocess_exec(
                 *compile_cmd,
@@ -244,7 +290,7 @@ async def _compile_and_run(ws: WebSocket, lang: str, code: str):
             return
 
         try:
-            _, cerr = await asyncio.wait_for(cp.communicate(), timeout=COMPILE_TIMEOUT)
+            _, cerr = await asyncio.wait_for(cp.communicate(), timeout=compile_timeout)
         except asyncio.TimeoutError:
             try:
                 cp.kill()
@@ -262,8 +308,9 @@ async def _compile_and_run(ws: WebSocket, lang: str, code: str):
                 "data": cerr.decode("utf-8", errors="replace"),
             })
             return
-        if not binp.exists():
-            await _send(ws, {"type": "error", "message": "Compiler produced no binary."})
+        built = (tmp / f"{main_class}.class").exists() if is_java else binp.exists()
+        if not built:
+            await _send(ws, {"type": "error", "message": "Compiler produced no output."})
             return
 
         # ---- Run ----
@@ -272,7 +319,9 @@ async def _compile_and_run(ws: WebSocket, lang: str, code: str):
         # Use stdbuf on POSIX to force the child's libc into unbuffered mode so
         # printf prompts without a trailing '\n' actually appear before the
         # blocking scanf/cin call. Falls back to direct exec if stdbuf missing.
-        if IS_POSIX and _has_cmd("stdbuf"):
+        if is_java:
+            run_argv = [cfg["runtime"], *JAVA_FLAGS, "-cp", str(tmp), main_class]
+        elif IS_POSIX and _has_cmd("stdbuf"):
             run_argv = ["stdbuf", "-o0", "-e0", str(binp)]
         else:
             run_argv = [str(binp)]
@@ -284,7 +333,7 @@ async def _compile_and_run(ws: WebSocket, lang: str, code: str):
             cwd=str(tmp),
         )
         if IS_POSIX:
-            kwargs["preexec_fn"] = _apply_limits
+            kwargs["preexec_fn"] = (lambda: _apply_limits(limit_address_space=not is_java))
 
         t0 = time.monotonic()
         try:

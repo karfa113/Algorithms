@@ -1,4 +1,4 @@
-# Algorithm Lab — compile-and-run backend
+# DSA Lab — compile-and-run backend (C, C++, Java)
 # Render's native Python image ships without a C/C++ toolchain, so we use a
 # Docker runtime and install gcc/g++ explicitly. coreutils (stdbuf) lets us
 # force unbuffered output so interactive printf-then-scanf prompts arrive
@@ -6,7 +6,7 @@
 
 FROM python:3.11-slim
 
-# Build tools + coreutils (for stdbuf). procps gives us ps for debugging.
+# Build tools + JDK (javac/java for the Java tab) + coreutils (for stdbuf). procps gives us ps for debugging.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
         gcc \
@@ -14,6 +14,7 @@ RUN apt-get update \
         coreutils \
         procps \
         libc6-dev \
+        default-jdk-headless \
  && rm -rf /var/lib/apt/lists/*
 
 # Non-root runtime user so a stray rm -rf can't touch the system.

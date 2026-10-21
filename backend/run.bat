@@ -1,5 +1,5 @@
 @echo off
-REM Algorithm Lab — local backend launcher.
+REM DSA Lab — local backend launcher.
 REM Run this from the backend folder by double-clicking, or:
 REM     run.bat
 REM Stops the server with Ctrl+C.

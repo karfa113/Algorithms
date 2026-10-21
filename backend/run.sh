@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Algorithm Lab — local backend launcher (macOS/Linux/WSL).
+# DSA Lab — local backend launcher (macOS/Linux/WSL).
 # Run from this folder:  ./run.sh
 set -e
 cd "$(dirname "$0")"
