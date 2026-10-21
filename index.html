@@ -3,30 +3,32 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="Design and Analysis of Algorithm Lab — PCC-CS494. Complete C and C++ implementations with concepts, algorithms, and viva questions." />
-<title>DAA (PCC-CS494)</title>
+<meta name="description" content="DSA Lab — Data Structures and Algorithms with concepts, step-by-step algorithms, runnable C, C++ and Java code, visualizers and viva questions." />
+<meta name="theme-color" content="#0a0a0a" />
+<title>DSA Lab — Data Structures &amp; Algorithms</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css" />
+<script>
+  /* apply the saved theme before first paint (no flash) */
+  try { var t = localStorage.getItem("theme"); if (t) document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
 </head>
 <body>
 
-<!-- Animated background blobs -->
 <div class="bg-wrap" aria-hidden="true">
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
-  <div class="blob blob-4"></div>
+  <div class="blob blob-1"></div><div class="blob blob-2"></div>
+  <div class="blob blob-3"></div><div class="blob blob-4"></div>
   <div class="grid-overlay"></div>
 </div>
 
 <!-- Top navigation -->
 <header class="topbar glass">
-  <div class="brand">
+  <a class="brand" href="#/" aria-label="DSA Lab home">
     <div class="logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Algorithm Lab logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12 7 L6 17 M12 7 L18 17"/>
         <circle cx="12" cy="6" r="2.6" fill="currentColor"/>
         <circle cx="6" cy="18" r="2.4" fill="currentColor"/>
@@ -34,78 +36,52 @@
       </svg>
     </div>
     <div class="brand-text">
-      <h1>Algorithm Lab</h1>
-      <span>Design &amp; Analysis of Algorithms · PCC-CS494</span>
+      <h1>DSA Lab</h1>
+      <span>Data Structures &amp; Algorithms</span>
     </div>
-  </div>
+  </a>
 
-  <nav class="topbar-actions">
+  <nav class="topnav" id="topnav" aria-label="Sections"></nav>
+
+  <div class="topbar-actions">
+    <a id="repoLink" class="icon-btn glass-btn" href="#" target="_blank" rel="noopener" title="View on GitHub" aria-label="View on GitHub">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a10.9 10.9 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.7 5.4-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>
+    </a>
     <button id="themeToggle" class="icon-btn glass-btn" title="Toggle theme" aria-label="Toggle theme">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
     </button>
     <button id="menuToggle" class="icon-btn glass-btn mobile-only" aria-label="Open menu">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
-  </nav>
+  </div>
 </header>
 
-<!-- Layout -->
 <main class="layout">
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="sidebar glass">
+  <aside id="sidebar" class="sidebar glass" aria-label="Topic index">
     <div class="sidebar-head">
-      <span class="muted">Index</span>
-      <input id="search" type="search" placeholder="Search algorithm…" />
-    </div>
-    <ul id="algoList" class="algo-list"></ul>
-    <div class="sidebar-foot muted">
-      <small>20 algorithms · C &amp; C++</small>
-    </div>
-  </aside>
-
-  <!-- Main content -->
-  <section class="content">
-
-    <!-- Hero -->
-    <div id="hero" class="hero glass">
-      <div class="hero-inner">
-        <span class="badge">PCC-CS494 · B.Tech CSE</span>
-        <h2>Master every algorithm in your DAA lab.</h2>
-        <p>A complete reference of <strong>20 algorithms</strong> with concepts, step-by-step pseudocode, working <strong>C</strong> &amp; <strong>C++</strong> implementations, and frequently-asked <strong>viva questions</strong>.</p>
-        <div class="hero-cta">
-          <a href="#algo-1" class="btn primary">Start Learning</a>
-          <a href="#syllabus" class="btn ghost">View Syllabus</a>
-        </div>
-        <div class="hero-stats">
-          <div class="stat"><span>20</span><small>Algorithms</small></div>
-          <div class="stat"><span>2</span><small>Languages</small></div>
-          <div class="stat"><span>100+</span><small>Viva Q&amp;A</small></div>
-        </div>
+      <div class="seg" id="catSeg" role="tablist" aria-label="Section"></div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input id="search" type="search" placeholder="Search topics…" aria-label="Search topics" />
+        <kbd>/</kbd>
       </div>
     </div>
+    <ul id="topicList" class="algo-list"></ul>
+    <div class="sidebar-foot muted" id="sidebarFoot"><small>Loading…</small></div>
+  </aside>
 
-    <!-- Syllabus quick links -->
-    <div id="syllabus" class="syllabus glass">
-      <h3>Lab Syllabus</h3>
-      <ol id="syllabusList" class="syllabus-list"></ol>
-    </div>
-
-    <!-- All algorithm sections rendered here -->
-    <div id="algoContainer"></div>
-
-    <footer class="footer glass">
-      <p>Academy of Technology · Design &amp; Analysis of Algorithm Lab</p>
-      <p class="muted"><small>Built for students · C &amp; C++ implementations</small></p>
-      <p class="credit">Built by <strong>Monojit Karfa</strong></p>
-    </footer>
+  <!-- Main content (rendered by script.js) -->
+  <section class="content" id="view" aria-live="polite">
+    <div class="glass loading-card"><div class="spinner"></div><p>Loading content from GitHub…</p></div>
   </section>
 </main>
 
-<!-- Toast -->
 <div id="toast" class="toast glass" role="status" aria-live="polite"></div>
 
-<script src="data.js"></script>
+<script src="config.js"></script>
+<script src="content.js"></script>
 <script src="runner.js"></script>
 <script src="script.js"></script>
 </body>

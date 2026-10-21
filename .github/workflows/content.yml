@@ -1,0 +1,44 @@
+name: Content
+
+# On every change to content/ :
+#   1. validate  - compile + run every C, C++ and Java program and check the outputs match
+#   2. index     - regenerate content/index.json (the topic list the website loads)
+on:
+  push:
+    branches: [main]
+    paths: ["content/**", "tools/**"]
+  pull_request:
+    paths: ["content/**", "tools/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "17" }
+      - name: Validate every topic (compile, run sample.in, compare languages)
+        run: python3 tools/validate.py --compare -j 4
+
+  index:
+    needs: validate
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: node tools/build-index.js
+      - name: Commit index.json if it changed
+        run: |
+          if ! git diff --quiet -- content/index.json; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add content/index.json
+            git commit -m "chore: update content/index.json [skip ci]"
+            git push
+          fi

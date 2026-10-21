@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="Algorithm Lab — interactive visualizer" />
-<title>Visualizer · Algorithm Lab</title>
+<meta name="description" content="DSA Lab — interactive algorithm visualizer" />
+<title>Visualizer · DSA Lab</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,9 +24,9 @@
 
 <!-- Top navigation -->
 <header class="topbar glass">
-  <a class="brand" href="index.html" id="brandBack" title="Back to Algorithm Lab">
+  <a class="brand" href="index.html" id="brandBack" title="Back to DSA Lab">
     <div class="logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Algorithm Lab logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="DSA Lab logo">
         <path d="M12 7 L6 17 M12 7 L18 17"/>
         <circle cx="12" cy="6" r="2.6" fill="currentColor"/>
         <circle cx="6" cy="18" r="2.4" fill="currentColor"/>
@@ -34,7 +34,7 @@
       </svg>
     </div>
     <div class="brand-text">
-      <h1>Algorithm Lab</h1>
+      <h1>DSA Lab</h1>
       <span>Visualizer</span>
     </div>
   </a>
@@ -86,72 +86,78 @@
   </nav>
 
   <footer class="footer glass">
-    <p>Academy of Technology · Design &amp; Analysis of Algorithm Lab</p>
+    <p>Academy of Technology · Data Structures &amp; Algorithms Lab</p>
     <p class="muted"><small>Visualizer · interactive playback · adjustable speed</small></p>
   </footer>
 </main>
 
-<script src="data.js"></script>
+<script src="config.js"></script>
+<script src="content.js"></script>
 <script src="visualizer.js"></script>
 <script>
-(function () {
+(async function () {
   "use strict";
 
-  // ----- Theme (mirrors script.js bindTheme so the page works standalone) -
-  const saved = localStorage.getItem("theme");
-  if (saved) document.documentElement.setAttribute("data-theme", saved);
+  // ----- Theme (mirrors script.js so the page works standalone) -----------
+  try { const saved = localStorage.getItem("theme"); if (saved) document.documentElement.setAttribute("data-theme", saved); } catch (e) {}
   document.getElementById("themeToggle").addEventListener("click", () => {
     const cur = document.documentElement.getAttribute("data-theme");
     const next = cur === "light" ? "" : "light";
     if (next) document.documentElement.setAttribute("data-theme", next);
     else      document.documentElement.removeAttribute("data-theme");
-    localStorage.setItem("theme", next);
+    try { localStorage.setItem("theme", next); } catch (e) {}
   });
 
-  // ----- Resolve target algorithm -----------------------------------------
-  const algos = window.ALGORITHMS || [];
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // ----- Load the algorithm list (only those that have a visualizer) -------
+  let algos = [];
+  try {
+    const cats = await window.DSAContent.loadAll();
+    const cat = cats.find(c => c.id === "algorithms");
+    algos = (cat ? cat.topics : []).filter(t => t.visualizer);
+  } catch (e) { /* handled below */ }
+
   const params = new URLSearchParams(location.search);
   const askedId = parseInt(params.get("algo") || "1", 10);
-  const algo = algos.find(a => a.id === askedId) || algos[0];
+  const algo = algos.find(a => a.num === askedId) || algos[0];
 
   if (!algo) {
-    document.getElementById("vizAlgoName").textContent = "No algorithms loaded.";
+    $("vizAlgoName").textContent = "Couldn't load the algorithm list.";
+    $("vizHost").innerHTML = "<div class='viz-soon'>Check your connection and reload.</div>";
     return;
   }
 
-  // ----- Header content ----------------------------------------------------
-  document.title = `${algo.name} · Visualizer`;
-  document.getElementById("vizAlgoNum").textContent = String(algo.id).padStart(2, "0");
-  document.getElementById("vizAlgoName").textContent = algo.name;
-  document.getElementById("vizAlgoConcept").innerHTML = algo.concept || "";
-  document.getElementById("vizAlgoTags").innerHTML =
-    (algo.tags || []).map(t => `<span class="tag">${t}</span>`).join("");
-  document.getElementById("vizAlgoLink").href = "index.html#algo-" + algo.id;
+  // ----- Header content ------------------------------------------------------
+  const pad = n => String(n).padStart(2, "0");
+  document.title = `${algo.short} · Visualizer`;
+  $("vizAlgoNum").textContent = pad(algo.num);
+  $("vizAlgoName").textContent = algo.title;
+  $("vizAlgoConcept").innerHTML = algo.info.concept || "";
+  $("vizAlgoTags").innerHTML = algo.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("");
+  $("vizAlgoLink").href = "index.html#/algorithms/" + algo.folder;
+  $("brandBack").href = "index.html";
 
-  // ----- Picker + prev/next -----------------------------------------------
-  const picker = document.getElementById("vizPicker");
+  // ----- Picker + prev/next --------------------------------------------------
+  const picker = $("vizPicker");
   algos.forEach(a => {
     const opt = document.createElement("option");
-    opt.value = a.id;
-    opt.textContent = `${String(a.id).padStart(2, "0")} · ${a.short || a.name}`;
-    if (a.id === algo.id) opt.selected = true;
+    opt.value = a.num;
+    opt.textContent = `${pad(a.num)} · ${a.short}`;
+    if (a.num === algo.num) opt.selected = true;
     picker.appendChild(opt);
   });
-  picker.addEventListener("change", () => {
-    location.search = "?algo=" + picker.value;
-  });
+  picker.addEventListener("change", () => { location.search = "?algo=" + picker.value; });
 
-  const idx = algos.findIndex(a => a.id === algo.id);
+  const idx = algos.indexOf(algo);
   const prev = algos[(idx - 1 + algos.length) % algos.length];
   const next = algos[(idx + 1) % algos.length];
-  const prevA = document.getElementById("vizPrev");
-  const nextA = document.getElementById("vizNext");
-  prevA.href = "viz.html?algo=" + prev.id;
-  prevA.title = `${prev.id}. ${prev.name}`;
-  nextA.href = "viz.html?algo=" + next.id;
-  nextA.title = `${next.id}. ${next.name}`;
+  const prevA = $("vizPrev"), nextA = $("vizNext");
+  prevA.href = "viz.html?algo=" + prev.num; prevA.title = `${prev.num}. ${prev.title}`;
+  nextA.href = "viz.html?algo=" + next.num; nextA.title = `${next.num}. ${next.title}`;
 
-  // Keyboard: ←/→ navigate, space play/pause
+  // Keyboard: Alt+←/→ navigate, space play/pause
   document.addEventListener("keydown", (e) => {
     if (e.target.matches("input, textarea, select")) return;
     if (e.key === "ArrowLeft" && e.altKey)  { e.preventDefault(); location.href = prevA.href; }
@@ -162,12 +168,11 @@
     }
   });
 
-  // ----- Mount visualizer --------------------------------------------------
+  // ----- Mount visualizer (registered by algorithm number) -------------------
   if (window.AlgoVisualizer && window.AlgoVisualizer.mount) {
-    window.AlgoVisualizer.mount(document.getElementById("vizHost"), algo.id);
+    window.AlgoVisualizer.mount($("vizHost"), algo.num);
   } else {
-    document.getElementById("vizHost").innerHTML =
-      "<div class='viz-soon'>Visualizer script failed to load.</div>";
+    $("vizHost").innerHTML = "<div class='viz-soon'>Visualizer script failed to load.</div>";
   }
 })();
 </script>

@@ -1,5 +1,5 @@
 /* ============================================================
-   Algorithm Lab — Visualizer
+   DSA Lab — Visualizer
    Per-algorithm SVG animation pane.
 
    How it works

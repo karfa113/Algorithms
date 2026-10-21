@@ -1,23 +1,17 @@
 /* ============================================================
-   Algorithm Lab — backend runner (WebSocket client)
-   Streams gcc/g++ compile + run through ws://.../ws/run.
+   DSA Lab — backend runner (WebSocket client)
+   Streams gcc/g++/javac compile + run through ws://.../ws/run.
    ============================================================ */
 
 (function () {
   "use strict";
 
-  // ---- Where the Python backend lives -------------------------------------
-  // Local dev:   ws://127.0.0.1:8765
-  // Render:      wss://<your-service>.onrender.com
-  // The runner picks based on hostname so you can deploy the static site to
-  // GitHub Pages without editing this for every push.
+  // ---- Where the backend lives: see config.js -> backend ---------------
+  const BK = (window.DSA_CONFIG && window.DSA_CONFIG.backend) || {};
   const BACKEND_URL = (() => {
     const host = location.hostname;
-    if (host === "" || host === "localhost" || host === "127.0.0.1") {
-      return "ws://127.0.0.1:8765/ws/run";
-    }
-    // EDIT THIS once Render gives you a URL:
-    return "wss://algorithms-zph7.onrender.com/ws/run";
+    const local = host === "" || host === "localhost" || host === "127.0.0.1";
+    return local ? (BK.local || "ws://127.0.0.1:8765/ws/run") : BK.remote;
   })();
 
   // Warm the Render free-tier dyno (cuts the first-run cold start) by hitting

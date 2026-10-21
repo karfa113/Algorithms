@@ -21,3 +21,7 @@ backend/algorun_*/
 
 # ----- Local logs -----
 *.log
+
+# ----- Node / misc -----
+node_modules/
+backend/test_*.log

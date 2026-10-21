@@ -1,0 +1,45 @@
+{
+  "generated": "auto — do not edit by hand; run tools/build-index.js",
+  "categories": {
+    "data-structures": [
+      "01-array-operations",
+      "02-stack-array",
+      "03-queue-circular",
+      "04-singly-linked-list",
+      "05-doubly-linked-list",
+      "06-circular-linked-list",
+      "07-stack-linked-list",
+      "08-queue-linked-list",
+      "09-infix-to-postfix",
+      "10-priority-queue-heap",
+      "11-binary-search-tree",
+      "12-avl-tree",
+      "13-hash-table",
+      "14-graph-representation",
+      "15-trie",
+      "16-disjoint-set-union"
+    ],
+    "algorithms": [
+      "01-binary-search",
+      "02-merge-sort",
+      "03-randomized-quick-sort",
+      "04-max-min-dc",
+      "05-heap-sort",
+      "06-bfs",
+      "07-dfs",
+      "08-fractional-knapsack",
+      "09-job-sequencing",
+      "10-kruskals-mst",
+      "11-prims-mst",
+      "12-dijkstras",
+      "13-bellman-ford",
+      "14-floyd-warshall",
+      "15-matrix-chain-mult",
+      "16-n-queen",
+      "17-m-coloring",
+      "18-hamiltonian-cycle",
+      "19-ford-fulkerson",
+      "20-tsp-bb"
+    ]
+  }
+}
